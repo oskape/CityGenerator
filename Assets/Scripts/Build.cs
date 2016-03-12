@@ -111,10 +111,14 @@ public class Build : MonoBehaviour {
 							new Building (thisScale, thisPos, hasRoof, windowTex);
 
 							//vertical stacking
-							if (thisScale.y < maxBuildingScale.y-minBuildingScale.y && thisScale.x > minBuildingScale.x+1.0f && thisScale.z > minBuildingScale.z+1.0f) {
-								Vector3 newScale = new Vector3 (Random.Range (minBuildingScale.x, thisScale.x), (int)Random.Range (minBuildingScale.y, maxBuildingScale.y - thisScale.y), Random.Range (minBuildingScale.z, thisScale.z));
-								Vector3 newPos = new Vector3 (Random.Range (thisPos.x, thisPos.x + thisScale.x - newScale.x), thisPos.y + thisScale.y, Random.Range (thisPos.z, thisPos.z + thisScale.z - newScale.z));
+							Vector3 oldScale = thisScale;
+							Vector3 oldPos = thisPos;
+							while (oldScale.y < maxBuildingScale.y-minBuildingScale.y && oldScale.x > minBuildingScale.x+1.0f && oldScale.z > minBuildingScale.z+1.0f) {
+								Vector3 newScale = new Vector3 (Random.Range (minBuildingScale.x, oldScale.x), (int)Random.Range (minBuildingScale.y, maxBuildingScale.y - oldScale.y), Random.Range (minBuildingScale.z, oldScale.z));
+								Vector3 newPos = new Vector3 (Random.Range (oldPos.x, oldPos.x + oldScale.x - newScale.x), oldPos.y + oldScale.y, Random.Range (oldPos.z, oldPos.z + oldScale.z - newScale.z));
 								new Building (newScale, newPos, hasRoof, windowTex);
+								oldScale = newScale;
+								oldPos = newPos;
 							}
 
 							thisPos.z += thisScale.z;
