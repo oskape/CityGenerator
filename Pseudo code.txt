@@ -1,0 +1,135 @@
+START
+for each column
+	set a random plot width
+	for each row
+		set a random plot height
+		set a random plot length
+		set random building dimensions within plot
+		translate building randomly within the plot
+
+		if building is at edge of city
+			cap height
+			create building with roof
+			if there is space on the left
+				create garage there
+			else if there is space on the right
+				create garage there
+
+		else
+			set new random building dimensions within the old
+			while there is enough x space left on plot
+				while there is enough z space left on plot
+					if 10% chance
+						give roof
+					create building
+					translate through building z
+					set new random y (not caring about initial dimensions lol)
+					set new random z (same)
+				translate through building x
+				reset z
+				set new random building x
+
+		draw grass quad over plot
+		draw road section around plot
+
+		translate through plot z and street space
+	translate through plot x and street space
+	reset z
+
+
+SetupPrimitive
+create requested primitive with new game object
+rotate object with provided vector3
+scale object with provided vector3
+position object with provided vector3
+if texture was provided
+	set texture to repeat
+	get mesh renderer from game object
+	assign renderer with texture
+	get mesh filter and from game object
+	scale mesh uv with provided texture scale
+set game object with provided tag
+return game object
+
+
+ROADSECTION
+	Constructor
+	store rotation needed for horizontal quad
+	store position of bottom left and right points
+	set intersection scale with streetspace square
+	create primitive quad in bottom left corner with intersection scale
+	create primitive quad in bottom right corner with intersection scale
+
+	set west road scale with streetspace and z scale of plot (provided)
+	translate x back half streetspace and z forward half z scale of plot
+	set texture scale with 1*x and y scale of west road
+	create primitive quad road with provided texture
+
+	store new rotation for perpendicular quad
+	set south road scale with streetspace and x scale of plot
+	translate x forward half x scale of plot and z back half streetspace
+	set texture scale with 1*x and y scale of south road
+	create primitive quad road with provided texture
+
+
+BUILDING
+	Constructor
+	translate through half given dimension (anchor is at centre)
+	create primitive cube with given dimensions
+
+	if roof texture was provided
+		create roof
+	if window texture was provided
+		while there is enough x space on wall (only front)
+			(re)set y position
+			while there is enough y space on wall
+				create windows
+				translate y through floor height
+			translate x through floor height (yes its the same)
+
+	Roof
+	set a random roof height between 0 and half the building height
+	calculate angle needed to connect roof height and half building length (atan)
+	calculate y scale of roof using cos, x is same as house
+	
+	if 50% chance
+		translate through building height and half roof global scale
+		set texture scale to roof dimensions
+		create primitive quad with roof dimensions and angle
+
+		translate through half house z scale
+		add 180 degrees to angle
+		create primitive quad with roof dimensions and angle
+
+		create triangle mesh to cover front gap between quads
+		translate through house x
+		create triangle mesh to cover back gap between quads
+
+	else
+		set a point for each top corner of the building (NW, NE, SE, SW)
+		and one point between them, with roof height added onto y (top)
+
+		set texture scale of wide sides to house x and roof y scale
+		set texture scale of long sides to house z and hypothenus of roof height and half house x
+
+		create triangle mesh for wide side (between SW, top and SE)
+		create triangle mesh for long side (between SE, top and NE)
+		create triangle mesh for wide side (between NE, top and NW)
+		create triangle mesh for long side (between NW, top and SW)
+
+	set chimney scale with roof height
+	translate to roof y and randomly within house on x and z
+	create cube primitive chimney
+
+	return all roof game objects in array
+
+	TriangleMesh
+	add meshfilter and mesh to new game object
+	set mesh vertices to provided positions
+	if reversed
+		backward indices
+	else
+		forward indices
+	set mesh texture scale to provided values
+	set mesh with provided texture
+	return game object
