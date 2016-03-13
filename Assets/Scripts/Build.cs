@@ -3,6 +3,35 @@ using System.Collections;
 
 public class Build : MonoBehaviour {
 
+	// TODO:
+
+	// Features:
+	// more shapes
+	// balconies
+	// stairs?
+	// path
+	// more window setups
+	// texture buildings and garages
+	// reset
+
+	// Fixes:
+	// door-window-roof clipping
+	// further roof pimping (ridge, middle window)
+	// limit roofs
+
+	// Methods:
+	// 2D garage / door / plot placement and pimping
+	// rotation
+	// symmetric displacement
+	// texture-bool
+	// re-organise and -scale
+	// reuse designs
+	// second pass?
+
+	// Dissertation:
+	// performance evaluation (size/area, quantity (20x20), primitive vs mesh, hardware)
+	// write stuff
+
 	//http://texturelib.com/texture/?path=/Textures/road/road/road_road_0019
 	//http://texturelib.com/texture/?path=/Textures/roof/roof_0075
 	//http://texturelib.com/texture/?path=/Textures/grass/grass/grass_grass_0131
@@ -31,40 +60,37 @@ public class Build : MonoBehaviour {
 	public Vector3 minBlockScale = new Vector3 (5.0f, 5.0f, 5.0f);
 	public Vector3 maxBlockScale = new Vector3 (25.0f, 25.0f, 25.0f);
 
-	// TODO:
+	private Roads roadNetwork;
+	private Buildings houses;
 
-	// Features:
-	// more shapes
-	// balconies
-	// stairs?
-	// path
-	// more window setups
-	// texture buildings and garages
-
-	// Fixes:
-	// door-window-roof clipping
-	// further roof pimping (ridge, middle window)
-
-	// Methods:
-	// 2D garage / door / plot placement and pimping
-	// rotation
-	// symmetric displacement
-	// texture-bool
-	// re-organise and -scale
-	// reuse designs
-	// second pass?
-
-	// Dissertation:
-	// performance evaluation (size/area, quantity (20x20), primitive vs mesh, hardware)
-	// write stuff
+	private GameObject[] roads;
+	private GameObject[] buildings;
 
 	// Use this for initialization
 	void Start () {
 		Random.seed = (int)System.DateTime.Now.Ticks;
 
-		Roads roadNetwork = gameObject.AddComponent<Roads> ();
-		Buildings houses = gameObject.AddComponent<Buildings> ();
+		roadNetwork = gameObject.AddComponent<Roads> ();
+		houses = gameObject.AddComponent<Buildings> ();
 
+		//roads = new GameObject[numRows * numColumns];
+
+		Init ();
+	}
+
+	public void CleanWorld()
+	{
+		GameObject[] GameObjects = (FindObjectsOfType<GameObject> () as GameObject[]);
+
+		for (int i = 0; i < GameObjects.Length; i++) {
+			if (GameObjects [i].tag != "MainCamera" && GameObjects [i].tag != "Light") {
+				Destroy (GameObjects [i]);
+			}
+		}
+	}
+
+	public void Init()
+	{
 		Vector3 plotPos = new Vector3(0.0f,0.0f,0.0f);
 		Vector3 plotScale;
 		Vector3 buildingPos;
@@ -88,11 +114,11 @@ public class Build : MonoBehaviour {
 
 				// Buildings
 				if (i == 0 || i == numColumns - 1 || j == 0 || j == numRows - 1) {
-					houses.SuburbanHouse (plotScale, plotPos, roofTex, windowTex);
+					houses.SuburbanHouse (plotScale, plotPos, roofTex, windowTex, doorTex);
 				}
 
 				else {
-					houses.TownHouse (plotScale, plotPos, roofTex, windowTex);
+					houses.TownHouse (plotScale, plotPos, roofTex, windowTex, doorTex);
 				}
 
 
@@ -109,7 +135,6 @@ public class Build : MonoBehaviour {
 			plotPos.z = 0.0f;
 		}
 	}
-
 
 	public static GameObject SetupPrimitive(PrimitiveType type, Vector3 rotation, Vector3 scale, Vector3 position, Texture texture, Vector2 texScale, string tag)
 	{

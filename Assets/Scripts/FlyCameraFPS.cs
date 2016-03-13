@@ -35,13 +35,20 @@ public class FlyCameraFPS : MonoBehaviour {
 	public float moveSpeed = 0.1f;
 	public float boost = 5.0f;
 
+	private Build builder;
+
 	// Update is called once per frame
 	void Start () {
-
+		builder = GetComponent<Build> ();
 	}
 
 	void Update ()
 	{
+		if (Input.GetKeyDown (KeyCode.R)) {
+			builder.CleanWorld ();
+			builder.Init ();
+		}
+
 		if (Input.GetKeyDown (KeyCode.Space)) {
 			moveSpeed *= boost;
 		}

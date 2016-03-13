@@ -31,7 +31,7 @@ public class Buildings : Build {
 		}
 	}
 
-	public void SuburbanHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex)
+	public void SuburbanHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex)
 	{
 		Vector3 buildingScale;
 		buildingScale.x = Random.Range(minHouseScale.x, plotScale.x);
@@ -72,7 +72,7 @@ public class Buildings : Build {
 		}
 	}
 
-	public void TownHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex)
+	public void TownHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex)
 	{
 		Vector3 buildingScale;// = plotScale;
 		buildingScale.x = Random.Range(minBlockScale.x, plotScale.x);
