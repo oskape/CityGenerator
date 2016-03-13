@@ -26,21 +26,31 @@ public class Build : MonoBehaviour {
 	public Vector3 maxBuildingScale = new Vector3 (10.0f, 25.0f, 10.0f);
 
 	// TODO:
+
+	// Features:
 	// more shapes
-	// door-window-roof clipping
-	// further roof pimping (ridge)
-	// vertical stacking++
-	// 2D garage / window (sort) / plot placement and pimping
+	// balconies
 	// stairs?
 	// path
+	// more window setups
+	// texture buildings and garages
+
+	// Fixes:
+	// door-window-roof clipping
+	// further roof pimping (ridge, middle window)
+
+	// Methods:
+	// 2D garage / door / plot placement and pimping
 	// rotation
 	// symmetric displacement
 	// texture-bool
 	// re-organise and -scale
 	// reuse designs
+	// second pass?
+
+	// Dissertation:
 	// performance evaluation (size/area, quantity (20x20), primitive vs mesh, hardware)
 	// write stuff
-	// second pass?
 
 	// Use this for initialization
 	void Start () {
@@ -56,9 +66,7 @@ public class Build : MonoBehaviour {
 			for (int j = 0; j < numRows; j++) {
 				//CHALLENGE: currentWidth = Random.Range (minBlockSpace, maxBlockSpace);
 
-				bool hasEntrance = false;
-
-				currentScale.y = Random.Range (minPlotScale.y, maxPlotScale.y);
+				currentScale.y = (int)Random.Range (minPlotScale.y, maxPlotScale.y);
 				currentScale.z = Random.Range (minPlotScale.z, maxPlotScale.z);
 				buildingScale.x = Random.Range(minBuildingScale.x, currentScale.x);
 				buildingScale.y = currentScale.y;
@@ -77,7 +85,7 @@ public class Build : MonoBehaviour {
 						Vector3 doorScale = new Vector3 (2.0f, 3.0f, 0.1f);
 						Vector3 doorPos = new Vector3 (buildingPos.x + (int)Random.Range (0.5f*doorScale.x, buildingScale.x-0.5f*doorScale.x), buildingPos.y + 0.5f*doorScale.y, buildingPos.z - 0.02f);
 						SetupPrimitive (PrimitiveType.Quad, new Vector3 (0.0f, 0.0f, 0.0f), doorScale, doorPos, doorTex, new Vector2 (1.0f, 1.0f), "Building");
-					} else { // why is it different?
+					} else {
 						Vector3 doorScale = new Vector3 (2.0f, 3.0f, 0.1f);
 						Vector3 doorPos = new Vector3 (buildingPos.x + (int)Random.Range (0.5f*doorScale.x, buildingScale.x-0.5f*doorScale.x), buildingPos.y + 0.5f*doorScale.y, buildingPos.z + buildingScale.z + 0.02f);
 						SetupPrimitive (PrimitiveType.Quad, new Vector3 (0.0f, 180.0f, 0.0f), doorScale, doorPos, doorTex, new Vector2 (1.0f, 1.0f), "Building");
@@ -99,7 +107,7 @@ public class Build : MonoBehaviour {
 				}
 
 				else {
-					Vector3 thisScale = new Vector3 (Random.Range(minBuildingScale.x, buildingScale.x), (int)Random.Range (minBuildingScale.y, buildingScale.y)+0.5f, Random.Range(minBuildingScale.z, buildingScale.z));
+					Vector3 thisScale = new Vector3 (Random.Range(minBuildingScale.x, buildingScale.x), (int)Random.Range (minBuildingScale.y, buildingScale.y), Random.Range(minBuildingScale.z, buildingScale.z));
 					Vector3 thisPos = buildingPos;
 					while (thisPos.x < currentPos.x+currentScale.x - thisScale.x) {
 						while (thisPos.z < currentPos.z+currentScale.z - thisScale.z) {
@@ -113,7 +121,7 @@ public class Build : MonoBehaviour {
 							//vertical stacking
 							Vector3 oldScale = thisScale;
 							Vector3 oldPos = thisPos;
-							while (oldScale.y < maxBuildingScale.y-minBuildingScale.y && oldScale.x > minBuildingScale.x+1.0f && oldScale.z > minBuildingScale.z+1.0f) {
+							while (oldPos.y + oldScale.y < maxBuildingScale.y-minBuildingScale.y && oldScale.x > minBuildingScale.x+1.0f && oldScale.z > minBuildingScale.z+1.0f) {
 								Vector3 newScale = new Vector3 (Random.Range (minBuildingScale.x, oldScale.x), (int)Random.Range (minBuildingScale.y, maxBuildingScale.y - oldScale.y), Random.Range (minBuildingScale.z, oldScale.z));
 								Vector3 newPos = new Vector3 (Random.Range (oldPos.x, oldPos.x + oldScale.x - newScale.x), oldPos.y + oldScale.y, Random.Range (oldPos.z, oldPos.z + oldScale.z - newScale.z));
 								new Building (newScale, newPos, hasRoof, windowTex);
@@ -122,7 +130,7 @@ public class Build : MonoBehaviour {
 							}
 
 							thisPos.z += thisScale.z;
-							thisScale.y = Random.Range ((int)minBuildingScale.y, (int)maxBuildingScale.y)+0.5f;
+							thisScale.y = (int)Random.Range (minBuildingScale.y, maxBuildingScale.y);
 							thisScale.z = Random.Range (minBuildingScale.z, maxBuildingScale.z);
 						}
 						thisPos.x += thisScale.x;
@@ -216,16 +224,32 @@ public class Build : MonoBehaviour {
 			Vector3 houseRotation = new Vector3(0.0f, 0.0f, 0.0f);
 			Vector2 texScale = new Vector2(1.0f, 1.0f);
 			block = SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
+			//houseScale.y *= 0.5f;
+			//block = SetupPrimitive(PrimitiveType.Cylinder, houseRotation, houseScale, housePosition, null, texScale, "Building");
 
 			if (roofTex != null)
 			{
 				//roofBlocks = new GameObject[5];
-				roofBlocks = RightAngleRoof(0, houseScale, position, roofTex);
+				roofBlocks = RightAngleRoof(0, scale, position, roofTex);
 			}
 
 			if (windowTex != null)
 			{
 				Windows(position, scale, windowTex);
+			}
+		}
+
+		// hmmmm
+		private void WindowColumn(Vector3 windowScale, Vector3 rotation, Vector3 scale, Vector3 position, Texture windowTex)
+		{
+			Vector2 texScale = new Vector2(1.0f, 1.0f);
+			Vector3 windowPosition = position;
+			//windowPosition.y += 0.5f * windowScale.y;
+
+			while (windowPosition.y < position.y+scale.y-2.0f*windowScale.y)
+			{
+				windowPosition.y += 2.0f*windowScale.y;
+				if (Random.Range(0, 2) == 0) SetupPrimitive(PrimitiveType.Quad, rotation, windowScale, windowPosition, windowTex, texScale, "Building");
 			}
 		}
 
@@ -236,75 +260,48 @@ public class Build : MonoBehaviour {
 			Vector3 windowScale = new Vector3(1.0f, 1.0f, 0.1f);
 			float windowHeight = windowScale.y*2.0f;
 			float floorHeight = windowHeight+windowScale.y;
+
 			Vector3 windowPosition = position;
 			windowPosition.x += windowHeight + 0.5f*windowScale.x;
-			//REDUNDANTwindowPosition.y += windowHeight + 0.5f*windowScale.y;
 			windowPosition.z -= 0.01f;
-			Vector2 texScale = new Vector2(1.0f, 1.0f);
+			Vector3 rotation = new Vector3 (0.0f, 0.0f, 0.0f);
 
-			while (windowPosition.x < position.x+scale.x-windowScale.y)
+			while (windowPosition.x < position.x+scale.x-windowScale.x)
 			{
-				windowPosition.y = position.y+windowHeight;
-				while (windowPosition.y < position.y+scale.y-windowScale.y)
-				{
-					//windowBlocks [windowNum] = new GameObject ();
-					if (Random.Range(0, 2) == 0) SetupPrimitive(PrimitiveType.Quad, new Vector3(0.0f, 0.0f, 0.0f), windowScale, windowPosition, windowTex, texScale, "Building");
-					windowPosition.y += floorHeight;
-				}
+				WindowColumn (windowScale, rotation, scale, windowPosition, windowTex);
 				windowPosition.x += floorHeight; // Dedicated value?
 			}
 
 			windowPosition = position;
 			windowPosition.x += scale.x + 0.01f;
-			windowPosition.y += windowHeight;
-			windowPosition.z += windowHeight;
-			Vector3 rotation = new Vector3 (0.0f, -90.0f, 0.0f);
+			windowPosition.z += windowHeight + 0.5f*windowScale.x;
+			rotation = new Vector3 (0.0f, -90.0f, 0.0f);
 
 			while (windowPosition.z < position.z+scale.z-windowScale.y)
 			{
-				windowPosition.y = position.y+windowHeight;
-				while (windowPosition.y < position.y+scale.y-windowScale.y)
-				{
-					//windowBlocks [windowNum] = new GameObject ();
-					if (Random.Range(0, 2) == 0) SetupPrimitive(PrimitiveType.Quad, rotation, windowScale, windowPosition, windowTex, texScale, "Building");
-					windowPosition.y += floorHeight;
-				}
+				WindowColumn (windowScale, rotation, scale, windowPosition, windowTex);
 				windowPosition.z += floorHeight; // Dedicated value?
 			}
 
 			windowPosition = position;
-			windowPosition.x += windowHeight;
-			windowPosition.y += windowHeight;
+			windowPosition.x += windowHeight + 0.5f*windowScale.x;
 			windowPosition.z += scale.z + 0.01f;
 			rotation = new Vector3 (0.0f, 180.0f, 0.0f);
 
 			while (windowPosition.x < position.x+scale.x-windowScale.y)
 			{
-				windowPosition.y = position.y+windowHeight;
-				while (windowPosition.y < position.y+scale.y-windowScale.y)
-				{
-					//windowBlocks [windowNum] = new GameObject ();
-					if (Random.Range(0, 2) == 0) SetupPrimitive(PrimitiveType.Quad, rotation, windowScale, windowPosition, windowTex, texScale, "Building");
-					windowPosition.y += floorHeight;
-				}
+				WindowColumn (windowScale, rotation, scale, windowPosition, windowTex);
 				windowPosition.x += floorHeight; // Dedicated value?
 			}
 
 			windowPosition = position;
 			windowPosition.x -= 0.01f;
-			windowPosition.y += windowHeight;
-			windowPosition.z += windowHeight;
+			windowPosition.z += windowHeight + 0.5f*windowScale.x;
 			rotation = new Vector3 (0.0f, 90.0f, 0.0f);
 
 			while (windowPosition.z < position.z+scale.z-windowScale.y)
 			{
-				windowPosition.y = position.y+windowHeight;
-				while (windowPosition.y < position.y+scale.y-windowScale.y)
-				{
-					//windowBlocks [windowNum] = new GameObject ();
-					if (Random.Range(0, 2) == 0) SetupPrimitive(PrimitiveType.Quad, rotation, windowScale, windowPosition, windowTex, texScale, "Building");
-					windowPosition.y += floorHeight;
-				}
+				WindowColumn (windowScale, rotation, scale, windowPosition, windowTex);
 				windowPosition.z += floorHeight; // Dedicated value?
 			}
 
