@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c6fda21bde303d84fa7458de32e7890b
+timeCreated: 1457884587
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - roofTex: {instanceID: 0}
+  - windowTex: {instanceID: 0}
+  - grassTex: {instanceID: 0}
+  - doorTex: {instanceID: 0}
+  - roadTex: {fileID: 2800000, guid: e81d4445702ee4b468c27c8a46d5946a, type: 3}
+  - interTex: {fileID: 2800000, guid: 42c82ac294dd40f4588a5bd50a20cd09, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
