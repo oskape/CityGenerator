@@ -136,7 +136,7 @@ public class Build : MonoBehaviour {
 		}
 	}
 
-	public static GameObject SetupPrimitive(PrimitiveType type, Vector3 rotation, Vector3 scale, Vector3 position, Texture texture, Vector2 texScale, string tag)
+	protected GameObject SetupPrimitive(PrimitiveType type, Vector3 rotation, Vector3 scale, Vector3 position, Texture texture, Vector2 texScale, string tag)
 	{
 		GameObject shape = GameObject.CreatePrimitive (type);
 		shape.transform.Rotate (rotation);
@@ -160,6 +160,124 @@ public class Build : MonoBehaviour {
 		shape.tag = tag;
 
 		return shape;
+	}
+
+	protected GameObject BoxMesh(Vector3 scale, Vector3 position, Texture texture, Vector2 textureScale, string tag)
+	{
+		GameObject box = new GameObject ();
+		Mesh mesh = new Mesh ();
+		box.AddComponent<MeshFilter> ().mesh = mesh;
+
+		Vector3[] vertices = new Vector3[8];
+
+		// front
+		vertices [0] = position; // bottom left
+		vertices [1] = new Vector3 (position.x + scale.x, position.y, position.z); // bottom right
+		vertices [2] = new Vector3 (position.x + scale.x, position.y + scale.y, position.z); // top right
+		vertices [3] = new Vector3 (position.x, position.y + scale.y, position.z); // top left
+
+		// back
+		position.z += scale.z;
+		vertices [4] = position; // bottom left
+		vertices [5] = new Vector3 (position.x + scale.x, position.y, position.z); // bottom right
+		vertices [6] = new Vector3 (position.x + scale.x, position.y + scale.y, position.z); // top right
+		vertices [7] = new Vector3 (position.x, position.y + scale.y, position.z); // top left
+
+		Vector3[] moreVertices = new Vector3[] {
+			// front
+			vertices [0], vertices [1], vertices [2], vertices [3],
+			// back
+			vertices [5], vertices [4], vertices [7], vertices [6],
+			// left
+			vertices [4], vertices [0], vertices [3], vertices [7],
+			// right
+			vertices [1], vertices [5], vertices [6], vertices [2],
+			// top
+			vertices [3], vertices [2], vertices [6], vertices [7]
+		};
+
+		Vector2 xBL = new Vector2 (0.0f, 0.0f);
+		Vector2 xBR = new Vector2 (scale.x, 0.0f);
+		Vector2 xTR = new Vector2 (scale.x, scale.y);
+		Vector2 xTL = new Vector2 (0.0f, scale.y);
+
+		Vector2 zBL = new Vector2 (0.0f, 0.0f);
+		Vector2 zBR = new Vector2 (scale.z, 0.0f);
+		Vector2 zTR = new Vector2 (scale.z, scale.y);
+		Vector2 zTL = new Vector2 (0.0f, scale.y);
+
+		Vector2[] UVs = new Vector2[] {
+			xBL, xBR, xTR, xTL,
+			xBL, xBR, xTR, xTL,
+			zBL, zBR, zTR, zTL,
+			zBL, zBR, zTR, zTL,
+			new Vector2(0.0f, 0.0f), new Vector2(1.0f, 0.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 1.0f)
+		};
+			
+		Vector3[] normals = new Vector3[] {
+			Vector3.back, Vector3.back, Vector3.back, Vector3.back,
+			Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward,
+			Vector3.left, Vector3.left, Vector3.left, Vector3.left,
+			Vector3.right, Vector3.right, Vector3.right, Vector3.right,
+			Vector3.up, Vector3.up, Vector3.up, Vector3.up
+		};
+
+		mesh.vertices = moreVertices;
+		mesh.uv = UVs;
+		// only half the lenght on top?
+		mesh.normals = normals;
+
+		mesh.triangles = new int[] {
+			// front
+			2, 1, 0,
+			0, 3, 2,
+//			2, 1, 0,
+//			0, 3, 2,
+			// back
+			6, 5, 4,
+			4, 7, 6,
+//			7, 4, 5,
+//			5, 6, 7,
+			// left
+			10, 9, 8,
+			8, 11, 10,
+//			3, 0, 4,
+//			4, 7, 3,
+			// right
+			14, 13, 12,
+			12, 15, 14,
+//			6, 5, 1,
+//			1, 2, 6,
+			// top
+			7, 2, 3,
+			3, 6, 7
+//			6, 2, 3,
+//			3, 7, 6
+		};
+
+		//mesh.uv = new Vector2[] { new Vector2 (0, 0), new Vector2 (0.5f*textureScale.x, textureScale.y), new Vector2 (textureScale.x, 0) };
+		box.AddComponent<MeshRenderer> ().material.mainTexture = texture;
+
+		return box;
+	}
+
+	protected GameObject TriangleMesh(Vector3[] position, bool reversed, Texture roofTex, Vector2 texScale)
+	{
+		GameObject triangle = new GameObject ();
+		Mesh mesh = new Mesh ();
+		triangle.AddComponent<MeshFilter> ().mesh = mesh;
+
+		mesh.vertices = position;
+		//triangle.transform.RotateAround(// (0.0f, 90.0f, 0.0f);
+		if (reversed) {
+			mesh.triangles = new int[] { 2, 1, 0 };
+		} else {
+			mesh.triangles = new int[] { 0, 1, 2 };
+		}
+		mesh.uv = new Vector2[] { new Vector2 (0, 0), new Vector2 (0.5f*texScale.x, texScale.y), new Vector2 (texScale.x, 0) };
+		triangle.AddComponent<MeshRenderer> ().material.mainTexture = roofTex;
+
+		return triangle;
 	}
 
 	// Update is called once per frame

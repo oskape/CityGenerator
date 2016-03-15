@@ -12,10 +12,10 @@ public class Buildings : Build {
 		block = new GameObject();
 
 		Vector3 houseScale = scale;
-		Vector3 housePosition = position + 0.5f*houseScale;
+		Vector3 housePosition = position;// + 0.5f*houseScale;
 		Vector3 houseRotation = new Vector3(0.0f, 0.0f, 0.0f);
 		Vector2 texScale = new Vector2(1.0f, 1.0f);
-		block = SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
+		block = BoxMesh (houseScale, housePosition, roofTex, texScale, "Building");//SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
 		//houseScale.y *= 0.5f;
 		//block = SetupPrimitive(PrimitiveType.Cylinder, houseRotation, houseScale, housePosition, null, texScale, "Building");
 
@@ -260,22 +260,6 @@ public class Buildings : Build {
 		roofBlocks [4] = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), chimneyScale, chimneyPos, roofTex, chimneyTexScale, "Building");
 
 		return roofBlocks;
-	}
-
-	private GameObject TriangleMesh(Vector3[] position, bool reversed, Texture roofTex, Vector2 texScale)
-	{
-		GameObject triangle = new GameObject ();
-		Mesh mesh = new Mesh ();
-		triangle.AddComponent<MeshFilter> ().mesh = mesh;
-		mesh.vertices = position;
-		if (reversed) {
-			mesh.triangles = new int[] { 2, 1, 0 };
-		} else {
-			mesh.triangles = new int[] { 0, 1, 2 };
-		}
-		mesh.uv = new Vector2[] { new Vector2 (0, 0), new Vector2 (0.5f*texScale.x, texScale.y), new Vector2 (texScale.x, 0) };
-		triangle.AddComponent<MeshRenderer> ().material.mainTexture = roofTex;
-		return triangle;
 	}
 
 	// Use this for initialization
