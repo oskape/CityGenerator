@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Build : MonoBehaviour {
 
@@ -162,7 +163,85 @@ public class Build : MonoBehaviour {
 		return shape;
 	}
 
+	// https://github.com/mortennobel/ProceduralMesh/blob/master/SimpleProceduralCube.cs
 	protected GameObject BoxMesh(Vector3 scale, Vector3 position, Texture texture, Vector2 textureScale, string tag)
+	{
+		GameObject box = new GameObject ();
+		MeshFilter meshFilter = box.AddComponent<MeshFilter>();
+		Mesh mesh = new Mesh ();
+		meshFilter.mesh = mesh;
+
+		mesh.vertices = new Vector3[]{
+			// face 1 (xy plane, z=0)
+			position+new Vector3(0,0,0), 
+			position+new Vector3(scale.x,0,0), 
+			position+new Vector3(scale.x,scale.y,0), 
+			position+new Vector3(0,scale.y,0), 
+			// face 2 (zy plane, x=1)
+			position+new Vector3(scale.x,0,0), 
+			position+new Vector3(scale.x,0,scale.z), 
+			position+new Vector3(scale.x,scale.y,scale.z), 
+			position+new Vector3(scale.x,scale.y,0), 
+			// face 3 (xy plane, z=1)
+			position+new Vector3(scale.x,0,scale.z), 
+			position+new Vector3(0,0,scale.z), 
+			position+new Vector3(0,scale.y,scale.z), 
+			position+new Vector3(scale.x,scale.y,scale.z), 
+			// face 4 (zy plane, x=0)
+			position+new Vector3(0,0,scale.z), 
+			position+new Vector3(0,0,0), 
+			position+new Vector3(0,scale.y,0), 
+			position+new Vector3(0,scale.y,scale.z), 
+			// face 5  (zx plane, y=1)
+			position+new Vector3(0,scale.y,0), 
+			position+new Vector3(scale.x,scale.y,0), 
+			position+new Vector3(scale.x,scale.y,scale.z), 
+			position+new Vector3(0,scale.y,scale.z), 
+			// face 6 (zx plane, y=0)
+			position+new Vector3(0,0,0), 
+			position+new Vector3(0,0,scale.z), 
+			position+new Vector3(scale.x,0,scale.z), 
+			position+new Vector3(scale.x,0,0), 
+		};
+
+		int faces = 6; // here a face = 2 triangles
+
+		List<int> triangles = new List<int>();
+		List<Vector2> uvs = new List<Vector2>();
+
+		for (int i = 0; i < faces; i++) {
+			int triangleOffset = i*4;
+			triangles.Add(0+triangleOffset);
+			triangles.Add(2+triangleOffset);
+			triangles.Add(1+triangleOffset);
+
+			triangles.Add(0+triangleOffset);
+			triangles.Add(3+triangleOffset);
+			triangles.Add(2+triangleOffset);
+
+			// same uvs for all faces
+			uvs.Add(new Vector2(0,0));
+			uvs.Add(new Vector2(1,0));
+			uvs.Add(new Vector2(1,1));
+			uvs.Add(new Vector2(0,1));
+		}
+
+		mesh.triangles = triangles.ToArray();
+
+		mesh.uv = uvs.ToArray();
+
+		box.AddComponent<MeshRenderer> ().material.mainTexture = texture;
+
+		mesh.RecalculateNormals(); 
+		mesh.RecalculateBounds (); 
+		mesh.Optimize();
+
+		return box;
+		//renderer.material = new Material(Shader.Find("Diffuse"));
+	}
+
+	// only half the length normals on top?
+	protected GameObject BoxMeshBrokenNormals(Vector3 scale, Vector3 position, Texture texture, Vector2 textureScale, string tag)
 	{
 		GameObject box = new GameObject ();
 		Mesh mesh = new Mesh ();
@@ -214,18 +293,18 @@ public class Build : MonoBehaviour {
 			new Vector2(0.0f, 0.0f), new Vector2(1.0f, 0.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 1.0f)
 		};
 			
-		Vector3[] normals = new Vector3[] {
-			Vector3.back, Vector3.back, Vector3.back, Vector3.back,
-			Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward,
-			Vector3.left, Vector3.left, Vector3.left, Vector3.left,
-			Vector3.right, Vector3.right, Vector3.right, Vector3.right,
-			Vector3.up, Vector3.up, Vector3.up, Vector3.up
-		};
+//		Vector3[] normals = new Vector3[] {
+//			Vector3.back, Vector3.back, Vector3.back, Vector3.back,
+//			Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward,
+//			Vector3.left, Vector3.left, Vector3.left, Vector3.left,
+//			Vector3.right, Vector3.right, Vector3.right, Vector3.right,
+//			Vector3.up, Vector3.up, Vector3.up, Vector3.up
+//		};
 
 		mesh.vertices = moreVertices;
 		mesh.uv = UVs;
 		// only half the lenght on top?
-		mesh.normals = normals;
+		//mesh.normals = normals;
 
 		mesh.triangles = new int[] {
 			// front
@@ -254,6 +333,10 @@ public class Build : MonoBehaviour {
 //			6, 2, 3,
 //			3, 7, 6
 		};
+
+		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		mesh.Optimize();
 
 		//mesh.uv = new Vector2[] { new Vector2 (0, 0), new Vector2 (0.5f*textureScale.x, textureScale.y), new Vector2 (textureScale.x, 0) };
 		box.AddComponent<MeshRenderer> ().material.mainTexture = texture;
