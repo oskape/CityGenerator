@@ -37,12 +37,14 @@ public class Build : MonoBehaviour {
 	//http://texturelib.com/texture/?path=/Textures/roof/roof_0075
 	//http://texturelib.com/texture/?path=/Textures/grass/grass/grass_grass_0131
 	//http://texturelib.com/texture/?path=/Textures/doors/wood%20doors/doors_wood_doors_0201
+	//http://texturelib.com/texture/?path=/Textures/brick/modern/brick_modern_0123
 	public Texture roadTex;
 	public Texture interTex;
 	public Texture roofTex;
 	public Texture windowTex;
 	public Texture grassTex;
 	public Texture doorTex;
+	public Texture houseTex;
 
 	public int numRows = 15;
 	public int numColumns = 10;
@@ -115,11 +117,11 @@ public class Build : MonoBehaviour {
 
 				// Buildings
 				if (i == 0 || i == numColumns - 1 || j == 0 || j == numRows - 1) {
-					houses.SuburbanHouse (plotScale, plotPos, roofTex, windowTex, doorTex);
+					houses.SuburbanHouse (plotScale, plotPos, roofTex, windowTex, doorTex, houseTex);
 				}
 
 				else {
-					houses.TownHouse (plotScale, plotPos, roofTex, windowTex, doorTex);
+					houses.TownHouse (plotScale, plotPos, roofTex, windowTex, doorTex, houseTex);
 				}
 
 
@@ -193,18 +195,18 @@ public class Build : MonoBehaviour {
 			position+new Vector3(0,scale.y,0), 
 			position+new Vector3(0,scale.y,scale.z), 
 			// face 5  (zx plane, y=1)
-			position+new Vector3(0,scale.y,0), 
-			position+new Vector3(scale.x,scale.y,0), 
-			position+new Vector3(scale.x,scale.y,scale.z), 
-			position+new Vector3(0,scale.y,scale.z), 
+//			position+new Vector3(0,scale.y,0), 
+//			position+new Vector3(scale.x,scale.y,0), 
+//			position+new Vector3(scale.x,scale.y,scale.z), 
+//			position+new Vector3(0,scale.y,scale.z), 
 			// face 6 (zx plane, y=0)
-			position+new Vector3(0,0,0), 
-			position+new Vector3(0,0,scale.z), 
-			position+new Vector3(scale.x,0,scale.z), 
-			position+new Vector3(scale.x,0,0), 
+//			position+new Vector3(0,0,0), 
+//			position+new Vector3(0,0,scale.z), 
+//			position+new Vector3(scale.x,0,scale.z), 
+//			position+new Vector3(scale.x,0,0), 
 		};
 
-		int faces = 6; // here a face = 2 triangles
+		int faces = 4; // here a face = 2 triangles
 
 		List<int> triangles = new List<int>();
 		List<Vector2> uvs = new List<Vector2>();
@@ -220,11 +222,35 @@ public class Build : MonoBehaviour {
 			triangles.Add(2+triangleOffset);
 
 			// same uvs for all faces
-			uvs.Add(new Vector2(0,0));
-			uvs.Add(new Vector2(1,0));
-			uvs.Add(new Vector2(1,1));
-			uvs.Add(new Vector2(0,1));
+//			uvs.Add(new Vector2(0,0));
+//			uvs.Add(new Vector2(1,0));
+//			uvs.Add(new Vector2(1,1));
+//			uvs.Add(new Vector2(0,1));
 		}
+
+		//badbadbad
+		float texScale = 0.1f;
+		scale *= texScale;
+		// use passed textureScale
+		uvs.Add (new Vector2 (0.0f, 0.0f));
+		uvs.Add (new Vector2 (scale.x, 0.0f));
+		uvs.Add (new Vector2 (scale.x, scale.y));
+		uvs.Add (new Vector2 (0.0f, scale.y));
+
+		uvs.Add (new Vector2 (0.0f, 0.0f));
+		uvs.Add (new Vector2 (scale.z, 0.0f));
+		uvs.Add (new Vector2 (scale.z, scale.y));
+		uvs.Add (new Vector2 (0.0f, scale.y));
+
+		uvs.Add (new Vector2 (0.0f, 0.0f));
+		uvs.Add (new Vector2 (scale.x, 0.0f));
+		uvs.Add (new Vector2 (scale.x, scale.y));
+		uvs.Add (new Vector2 (0.0f, scale.y));
+
+		uvs.Add (new Vector2 (0.0f, 0.0f));
+		uvs.Add (new Vector2 (scale.z, 0.0f));
+		uvs.Add (new Vector2 (scale.z, scale.y));
+		uvs.Add (new Vector2 (0.0f, scale.y));
 
 		mesh.triangles = triangles.ToArray();
 

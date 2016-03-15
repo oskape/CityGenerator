@@ -7,7 +7,7 @@ public class Buildings : Build {
 	private GameObject[] roofBlocks;
 	//private GameObject[] windowBlocks;
 
-	public void MakeBuilding(Vector3 scale, Vector3 position, Texture roofTex, Texture windowTex)
+	public void MakeBuilding(Vector3 scale, Vector3 position, Texture roofTex, Texture windowTex, Texture buildingTex)
 	{
 		block = new GameObject();
 
@@ -15,7 +15,7 @@ public class Buildings : Build {
 		Vector3 housePosition = position;// + 0.5f*houseScale;
 		Vector3 houseRotation = new Vector3(0.0f, 0.0f, 0.0f);
 		Vector2 texScale = new Vector2(1.0f, 1.0f);
-		block = BoxMesh (houseScale, housePosition, roofTex, texScale, "Building");//SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
+		block = BoxMesh (houseScale, housePosition, buildingTex, texScale, "Building");//SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
 		//houseScale.y *= 0.5f;
 		//block = SetupPrimitive(PrimitiveType.Cylinder, houseRotation, houseScale, housePosition, null, texScale, "Building");
 
@@ -31,7 +31,7 @@ public class Buildings : Build {
 		}
 	}
 
-	public void SuburbanHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex)
+	public void SuburbanHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex, Texture buildingTex)
 	{
 		Vector3 buildingScale;
 		buildingScale.x = Random.Range(minHouseScale.x, plotScale.x);
@@ -42,7 +42,7 @@ public class Buildings : Build {
 		buildingPos.x += Random.Range(0, plotScale.x - buildingScale.x);
 		buildingPos.z += Random.Range(0, plotScale.z - buildingScale.z);
 
-		MakeBuilding(buildingScale, buildingPos, roofTex, windowTex);
+		MakeBuilding(buildingScale, buildingPos, roofTex, windowTex, buildingTex);
 
 		// doors, need path (single door with uv?)
 		if (buildingPos.z - plotPosition.z > plotPosition.z + plotScale.z - (buildingPos.z + buildingScale.z)) {
@@ -61,18 +61,18 @@ public class Buildings : Build {
 			Vector3 garagePosition = buildingPos;
 			garagePosition.x -= garageScale.x;
 			//new Building (garageScale, garagePosition, null, null);
-			MakeBuilding(garageScale, garagePosition, null, null);
+			MakeBuilding(garageScale, garagePosition, null, null, buildingTex);
 		}
 		else if ((plotPosition.x + plotScale.x) - (buildingPos.x + buildingScale.x) > minHouseScale.x) {
 			Vector3 garageScale = new Vector3 (minHouseScale.x, 3.0f, 0.5f * buildingScale.z);
 			Vector3 garagePosition = buildingPos;
 			garagePosition.x += buildingScale.x;
 			//new Building (garageScale, garagePosition, null, null);
-			MakeBuilding(garageScale, garagePosition, null, null);
+			MakeBuilding(garageScale, garagePosition, null, null, buildingTex);
 		}
 	}
 
-	public void TownHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex)
+	public void TownHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex, Texture buildingTex)
 	{
 		Vector3 buildingScale;// = plotScale;
 		buildingScale.x = Random.Range(minBlockScale.x, plotScale.x);
@@ -87,13 +87,8 @@ public class Buildings : Build {
 		Vector3 thisPos = buildingPos;
 		while (thisPos.x < plotPosition.x+plotScale.x - buildingScale.x) {
 			while (thisPos.z < plotPosition.z+plotScale.z - buildingScale.z) {
-				Texture hasRoof;
-				if (Random.Range (0, 10) == 0)
-					hasRoof = roofTex;
-				else
-					hasRoof = null;
 				//new Building (thisScale, thisPos, hasRoof, windowTex);
-				MakeBuilding(buildingScale, thisPos, hasRoof, windowTex);
+				MakeBuilding(buildingScale, thisPos, roofTex, windowTex, buildingTex);
 
 				//vertical stacking
 				Vector3 oldScale = buildingScale;
@@ -102,7 +97,7 @@ public class Buildings : Build {
 					Vector3 newScale = new Vector3 (Random.Range (minBlockScale.x, oldScale.x), (int)Random.Range (minBlockScale.y, maxBlockScale.y - oldScale.y), Random.Range (minBlockScale.z, oldScale.z));
 					Vector3 newPos = new Vector3 (Random.Range (oldPos.x, oldPos.x + oldScale.x - newScale.x), oldPos.y + oldScale.y, Random.Range (oldPos.z, oldPos.z + oldScale.z - newScale.z));
 					//new Building (newScale, newPos, hasRoof, windowTex);
-					MakeBuilding(newScale, newPos, hasRoof, windowTex);
+					MakeBuilding(newScale, newPos, roofTex, windowTex, buildingTex);
 					oldScale = newScale;
 					oldPos = newPos;
 				}
@@ -192,7 +187,7 @@ public class Buildings : Build {
 		GameObject[] roofBlocks;
 		roofBlocks = new GameObject[5];
 
-		float roofHeight = Random.Range (0.0f, 0.5f * houseScale.y);
+		float roofHeight = (int)Random.Range (0.0f, 0.5f * houseScale.y);
 		float angle = Mathf.Atan2 (roofHeight, 0.5f*houseScale.z);
 
 		Vector3 roofScale;
@@ -252,6 +247,8 @@ public class Buildings : Build {
 		}
 
 		Vector3 chimneyScale = new Vector3 (1.0f, roofHeight, 1.0f);
+		if (roofHeight < 1.0f)
+			chimneyScale.y = 1.0f;
 		Vector2 chimneyTexScale = new Vector2 (1.0f, chimneyScale.y);
 		Vector3 chimneyPos = new Vector3
 			(position.x + 0.01f + Random.Range (0.5f*chimneyScale.x, houseScale.x-0.5f*chimneyScale.x),
