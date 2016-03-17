@@ -13,12 +13,10 @@ public class Build : MonoBehaviour {
 	// path
 	// more window setups
 	// texture buildings and garages
-	// reset
 
 	// Fixes:
 	// door-window-roof clipping
 	// further roof pimping (ridge, middle window)
-	// limit roofs
 
 	// Methods:
 	// 2D garage / door / plot placement and pimping
@@ -28,6 +26,7 @@ public class Build : MonoBehaviour {
 	// re-organise and -scale
 	// reuse designs
 	// second pass?
+	// only step inwards on one side?
 
 	// Dissertation:
 	// performance evaluation (size/area, quantity (20x20), primitive vs mesh, hardware)
@@ -38,6 +37,7 @@ public class Build : MonoBehaviour {
 	//http://texturelib.com/texture/?path=/Textures/grass/grass/grass_grass_0131
 	//http://texturelib.com/texture/?path=/Textures/doors/wood%20doors/doors_wood_doors_0201
 	//http://texturelib.com/texture/?path=/Textures/brick/modern/brick_modern_0123
+	//http://texturelib.com/texture/?path=/Textures/wood/planks%20new/wood_planks_new_0042
 	public Texture roadTex;
 	public Texture interTex;
 	public Texture roofTex;
@@ -45,17 +45,18 @@ public class Build : MonoBehaviour {
 	public Texture grassTex;
 	public Texture doorTex;
 	public Texture houseTex;
+	public Texture townTex;
 
 	public int numRows = 15;
 	public int numColumns = 10;
 
-	public float streetSpace = 2.5f;
+	public float streetSpace = 5.0f;
 
-	public Vector3 minYardScale = new Vector3 (5.0f, 5.0f, 5.0f);
-	public Vector3 maxYardScale = new Vector3 (10.0f, 10.0f, 10.0f);
+	public Vector3 minYardScale = new Vector3 (10.0f, 10.0f, 10.0f);
+	public Vector3 maxYardScale = new Vector3 (15.0f, 15.0f, 15.0f);
 
 	public Vector3 minLotScale = new Vector3 (5.0f, 5.0f, 5.0f);
-	public Vector3 maxLotScale = new Vector3 (25.0f, 25.0f, 25.0f);
+	public Vector3 maxLotScale = new Vector3 (30.0f, 30.0f, 30.0f);
 
 	public Vector3 minHouseScale = new Vector3 (5.0f, 5.0f, 5.0f);
 	public Vector3 maxHouseScale = new Vector3 (10.0f, 10.0f, 10.0f);
@@ -94,8 +95,9 @@ public class Build : MonoBehaviour {
 
 	public void Init()
 	{
+
 		Vector3 plotPos = new Vector3(0.0f,0.0f,0.0f);
-		Vector3 plotScale;
+		Vector3 plotScale = new Vector3(0.0f, 0.0f, 0.0f);
 		Vector3 buildingPos;
 		Vector3 buildingScale;
 
@@ -106,7 +108,6 @@ public class Build : MonoBehaviour {
 				plotScale.x = Random.Range (minLotScale.x, maxLotScale.x);
 			}
 			for (int j = 0; j < numRows; j++) {
-				//CHALLENGE: currentWidth = Random.Range (minBlockSpace, maxBlockSpace);
 				if (j == 0 || j == numRows - 1) {
 					plotScale.z = Random.Range (minYardScale.z, maxYardScale.z);
 				} else {
@@ -121,7 +122,7 @@ public class Build : MonoBehaviour {
 				}
 
 				else {
-					houses.TownHouse (plotScale, plotPos, roofTex, windowTex, doorTex, houseTex);
+					houses.TownHouse (plotScale, plotPos, roofTex, windowTex, doorTex, townTex);
 				}
 
 
@@ -165,8 +166,209 @@ public class Build : MonoBehaviour {
 		return shape;
 	}
 
+	//http://wiki.unity3d.com/index.php/ProceduralPrimitives
+	protected GameObject ConeMesh(bool isCylinder, Vector3 scale, Vector3 position, Texture texture, float textureScale, string tag)
+	{
+		GameObject cone = new GameObject ();
+		MeshFilter filter = cone.AddComponent<MeshFilter>();
+		Mesh mesh = filter.mesh;
+		mesh.Clear();
+
+		float height = scale.y;
+		float bottomRadius = 0.5f*scale.x;
+		float topRadius = .05f;
+		if (isCylinder)
+			topRadius = bottomRadius;
+		int nbSides = 18;
+		int nbHeightSeg = 1; // Not implemented yet
+
+		int nbVerticesCap = nbSides + 1;
+		#region Vertices
+
+		// bottom + top + sides
+		Vector3[] vertices = new Vector3[nbVerticesCap + nbVerticesCap + nbSides * nbHeightSeg * 2 + 2];
+		int vert = 0;
+		float _2pi = Mathf.PI * 2f;
+
+		// Bottom cap
+		vertices[vert++] = new Vector3(0f, 0f, 0f);
+		while( vert <= nbSides )
+		{
+			float rad = (float)vert / nbSides * _2pi;
+			vertices[vert] = new Vector3(Mathf.Cos(rad) * bottomRadius, 0f, Mathf.Sin(rad) * bottomRadius);
+			vert++;
+		}
+
+		// Top cap
+		vertices[vert++] = new Vector3(0f, height, 0f);
+		while (vert <= nbSides * 2 + 1)
+		{
+			float rad = (float)(vert - nbSides - 1)  / nbSides * _2pi;
+			vertices[vert] = new Vector3(Mathf.Cos(rad) * topRadius, height, Mathf.Sin(rad) * topRadius);
+			vert++;
+		}
+
+		// Sides
+		int v = 0;
+		while (vert <= vertices.Length - 4 )
+		{
+			float rad = (float)v / nbSides * _2pi;
+			vertices[vert] = new Vector3(Mathf.Cos(rad) * topRadius, height, Mathf.Sin(rad) * topRadius);
+			vertices[vert + 1] = new Vector3(Mathf.Cos(rad) * bottomRadius, 0, Mathf.Sin(rad) * bottomRadius);
+			vert+=2;
+			v++;
+		}
+		vertices[vert] = vertices[ nbSides * 2 + 2 ];
+		vertices[vert + 1] = vertices[nbSides * 2 + 3 ];
+		#endregion
+
+		#region Normales
+
+		// bottom + top + sides
+		Vector3[] normales = new Vector3[vertices.Length];
+		vert = 0;
+
+		// Bottom cap
+		while( vert  <= nbSides )
+		{
+			normales[vert++] = Vector3.down;
+		}
+
+		// Top cap
+		while( vert <= nbSides * 2 + 1 )
+		{
+			normales[vert++] = Vector3.up;
+		}
+
+		// Sides
+		v = 0;
+		while (vert <= vertices.Length - 4 )
+		{			
+			float rad = (float)v / nbSides * _2pi;
+			float cos = Mathf.Cos(rad);
+			float sin = Mathf.Sin(rad);
+
+			normales[vert] = new Vector3(cos, 0f, sin);
+			normales[vert+1] = normales[vert];
+
+			vert+=2;
+			v++;
+		}
+		normales[vert] = normales[ nbSides * 2 + 2 ];
+		normales[vert + 1] = normales[nbSides * 2 + 3 ];
+		#endregion
+
+		#region UVs
+		Vector2[] uvs = new Vector2[vertices.Length];
+
+		// Bottom cap
+		int u = 0;
+		uvs[u++] = new Vector2(0.5f, 0.5f);
+		while (u <= nbSides)
+		{
+			float rad = (float)u / nbSides * _2pi;
+			uvs[u] = new Vector2(Mathf.Cos(rad) * .5f + .5f, Mathf.Sin(rad) * .5f + .5f);
+			u++;
+		}
+
+		// Top cap
+		uvs[u++] = new Vector2(0.5f, 0.5f);
+		while (u <= nbSides * 2 + 1)
+		{
+			float rad = (float)u / nbSides * _2pi;
+			uvs[u] = new Vector2(Mathf.Cos(rad) * .5f + .5f, Mathf.Sin(rad) * .5f + .5f);
+			u++;
+		}
+
+		// Sides
+		int u_sides = 0;
+		while (u <= uvs.Length - 4 )
+		{
+			float t = (float)u_sides / nbSides;
+			uvs[u] = new Vector3(t, 1f);
+			uvs[u + 1] = new Vector3(t, 0f);
+			u += 2;
+			u_sides++;
+		}
+		uvs[u] = new Vector2(1f, 1f);
+		uvs[u + 1] = new Vector2(1f, 0f);
+		#endregion 
+
+		#region Triangles
+		int nbTriangles = nbSides + nbSides + nbSides*2;
+		int[] triangles = new int[nbTriangles * 3 + 3];
+
+		// Bottom cap
+		int tri = 0;
+		int i = 0;
+		while (tri < nbSides - 1)
+		{
+			triangles[ i ] = 0;
+			triangles[ i+1 ] = tri + 1;
+			triangles[ i+2 ] = tri + 2;
+			tri++;
+			i += 3;
+		}
+		triangles[i] = 0;
+		triangles[i + 1] = tri + 1;
+		triangles[i + 2] = 1;
+		tri++;
+		i += 3;
+
+		// Top cap
+		//tri++;
+		while (tri < nbSides*2)
+		{
+			triangles[ i ] = tri + 2;
+			triangles[i + 1] = tri + 1;
+			triangles[i + 2] = nbVerticesCap;
+			tri++;
+			i += 3;
+		}
+
+		triangles[i] = nbVerticesCap + 1;
+		triangles[i + 1] = tri + 1;
+		triangles[i + 2] = nbVerticesCap;		
+		tri++;
+		i += 3;
+		tri++;
+
+		// Sides
+		while( tri <= nbTriangles )
+		{
+			triangles[ i ] = tri + 2;
+			triangles[ i+1 ] = tri + 1;
+			triangles[ i+2 ] = tri + 0;
+			tri++;
+			i += 3;
+
+			triangles[ i ] = tri + 1;
+			triangles[ i+1 ] = tri + 2;
+			triangles[ i+2 ] = tri + 0;
+			tri++;
+			i += 3;
+		}
+		#endregion
+
+		mesh.vertices = vertices;
+		mesh.normals = normales;
+		mesh.uv = uvs;
+		mesh.triangles = triangles;
+
+		cone.AddComponent<MeshRenderer> ().material.mainTexture = texture;
+
+		mesh.RecalculateBounds();
+		mesh.Optimize();
+
+		position.x += bottomRadius;
+		position.z += bottomRadius;
+		cone.transform.Translate (position);
+
+		return cone;
+	}
+
 	// https://github.com/mortennobel/ProceduralMesh/blob/master/SimpleProceduralCube.cs
-	protected GameObject BoxMesh(Vector3 scale, Vector3 position, Texture texture, Vector2 textureScale, string tag)
+	protected GameObject BoxMesh(Vector3 scale, Vector3 position, Texture texture, float textureScale, string tag)
 	{
 		GameObject box = new GameObject ();
 		MeshFilter meshFilter = box.AddComponent<MeshFilter>();
@@ -229,27 +431,26 @@ public class Build : MonoBehaviour {
 		}
 
 		//badbadbad
-		float texScale = 0.1f;
-		scale *= texScale;
+		Vector3 texScale = scale * textureScale;
 		// use passed textureScale
 		uvs.Add (new Vector2 (0.0f, 0.0f));
-		uvs.Add (new Vector2 (scale.x, 0.0f));
-		uvs.Add (new Vector2 (scale.x, scale.y));
-		uvs.Add (new Vector2 (0.0f, scale.y));
+		uvs.Add (new Vector2 (texScale.x, 0.0f));
+		uvs.Add (new Vector2 (texScale.x, texScale.y));
+		uvs.Add (new Vector2 (0.0f, texScale.y));
 
 		uvs.Add (new Vector2 (0.0f, 0.0f));
-		uvs.Add (new Vector2 (scale.z, 0.0f));
-		uvs.Add (new Vector2 (scale.z, scale.y));
-		uvs.Add (new Vector2 (0.0f, scale.y));
+		uvs.Add (new Vector2 (texScale.z, 0.0f));
+		uvs.Add (new Vector2 (texScale.z, texScale.y));
+		uvs.Add (new Vector2 (0.0f, texScale.y));
 
 		uvs.Add (new Vector2 (0.0f, 0.0f));
-		uvs.Add (new Vector2 (scale.x, 0.0f));
-		uvs.Add (new Vector2 (scale.x, scale.y));
-		uvs.Add (new Vector2 (0.0f, scale.y));
+		uvs.Add (new Vector2 (texScale.x, 0.0f));
+		uvs.Add (new Vector2 (texScale.x, texScale.y));
+		uvs.Add (new Vector2 (0.0f, texScale.y));
 
 		uvs.Add (new Vector2 (0.0f, 0.0f));
-		uvs.Add (new Vector2 (scale.z, 0.0f));
-		uvs.Add (new Vector2 (scale.z, scale.y));
+		uvs.Add (new Vector2 (texScale.z, 0.0f));
+		uvs.Add (new Vector2 (texScale.z, scale.y));
 		uvs.Add (new Vector2 (0.0f, scale.y));
 
 		mesh.triangles = triangles.ToArray();

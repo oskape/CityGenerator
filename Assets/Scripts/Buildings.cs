@@ -14,10 +14,10 @@ public class Buildings : Build {
 		Vector3 houseScale = scale;
 		Vector3 housePosition = position;// + 0.5f*houseScale;
 		Vector3 houseRotation = new Vector3(0.0f, 0.0f, 0.0f);
-		Vector2 texScale = new Vector2(1.0f, 1.0f);
+		float texScale = 0.3f;
+
 		block = BoxMesh (houseScale, housePosition, buildingTex, texScale, "Building");//SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
-		//houseScale.y *= 0.5f;
-		//block = SetupPrimitive(PrimitiveType.Cylinder, houseRotation, houseScale, housePosition, null, texScale, "Building");
+
 
 		if (roofTex != null)
 		{
@@ -61,43 +61,49 @@ public class Buildings : Build {
 			Vector3 garagePosition = buildingPos;
 			garagePosition.x -= garageScale.x;
 			//new Building (garageScale, garagePosition, null, null);
-			MakeBuilding(garageScale, garagePosition, null, null, buildingTex);
+			MakeBuilding(garageScale, garagePosition, roofTex, null, buildingTex);
 		}
 		else if ((plotPosition.x + plotScale.x) - (buildingPos.x + buildingScale.x) > minHouseScale.x) {
 			Vector3 garageScale = new Vector3 (minHouseScale.x, 3.0f, 0.5f * buildingScale.z);
 			Vector3 garagePosition = buildingPos;
 			garagePosition.x += buildingScale.x;
 			//new Building (garageScale, garagePosition, null, null);
-			MakeBuilding(garageScale, garagePosition, null, null, buildingTex);
+			MakeBuilding(garageScale, garagePosition, roofTex, null, buildingTex);
 		}
 	}
 
 	public void TownHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex, Texture buildingTex)
 	{
 		Vector3 buildingScale;// = plotScale;
-		buildingScale.x = Random.Range(minBlockScale.x, plotScale.x);
+		buildingScale.x = (int)Random.Range(minBlockScale.x, plotScale.x);
 		buildingScale.y = plotScale.y;
-		buildingScale.z = Random.Range(minBlockScale.z, plotScale.z);
+		buildingScale.z = (int)Random.Range(minBlockScale.z, plotScale.z);
 
 		Vector3 buildingPos = plotPosition;
 		buildingPos.x += Random.Range(0, plotScale.x - buildingScale.x);
 		buildingPos.z += Random.Range(0, plotScale.z - buildingScale.z);
 
-		//Vector3 thisScale = new Vector3 (Random.Range(minBlockScale.x, buildingScale.x), (int)Random.Range (minBlockScale.y, buildingScale.y), Random.Range(minBuildingScale.z, buildingScale.z));
 		Vector3 thisPos = buildingPos;
 		while (thisPos.x < plotPosition.x+plotScale.x - buildingScale.x) {
 			while (thisPos.z < plotPosition.z+plotScale.z - buildingScale.z) {
-				//new Building (thisScale, thisPos, hasRoof, windowTex);
-				MakeBuilding(buildingScale, thisPos, roofTex, windowTex, buildingTex);
+				
+				if (buildingScale.x == buildingScale.z) ConeMesh(true, buildingScale, thisPos, buildingTex, 0.5f, "Building");
+				else MakeBuilding(buildingScale, thisPos, roofTex, windowTex, buildingTex);
 
 				//vertical stacking
 				Vector3 oldScale = buildingScale;
 				Vector3 oldPos = thisPos;
+//				Vector3 newScale = oldScale;
+//				Vector3 newPos = oldPos;
 				while (oldPos.y + oldScale.y < maxBlockScale.y-minBlockScale.y && oldScale.x > minBlockScale.x+1.0f && oldScale.z > minBlockScale.z+1.0f) {
-					Vector3 newScale = new Vector3 (Random.Range (minBlockScale.x, oldScale.x), (int)Random.Range (minBlockScale.y, maxBlockScale.y - oldScale.y), Random.Range (minBlockScale.z, oldScale.z));
+//					if (newScale.x == newScale.z) ConeMesh(true, newScale, newPos, buildingTex, 0.5f, "Building");
+//					else MakeBuilding(newScale, newPos, roofTex, windowTex, buildingTex);
+
+					Vector3 newScale = new Vector3 ((int)Random.Range (minBlockScale.x, oldScale.x), (int)Random.Range (minBlockScale.y, maxBlockScale.y - oldScale.y), (int)Random.Range (minBlockScale.z, oldScale.z));
 					Vector3 newPos = new Vector3 (Random.Range (oldPos.x, oldPos.x + oldScale.x - newScale.x), oldPos.y + oldScale.y, Random.Range (oldPos.z, oldPos.z + oldScale.z - newScale.z));
-					//new Building (newScale, newPos, hasRoof, windowTex);
-					MakeBuilding(newScale, newPos, roofTex, windowTex, buildingTex);
+					
+					if (newScale.x == newScale.z) ConeMesh(true, newScale, newPos, buildingTex, 0.5f, "Building");
+					else MakeBuilding(newScale, newPos, roofTex, windowTex, buildingTex);
 					oldScale = newScale;
 					oldPos = newPos;
 				}
