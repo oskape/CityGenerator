@@ -64,19 +64,26 @@ public class Build : MonoBehaviour {
 	public Vector3 minBlockScale = new Vector3 (5.0f, 5.0f, 5.0f);
 	public Vector3 maxBlockScale = new Vector3 (25.0f, 25.0f, 25.0f);
 
-	private Roads roadNetwork;
-	private Buildings houses;
+	private Roads road;
+	private Buildings building;
 
-	private GameObject[] roads;
-	private GameObject[] buildings;
+	//GameObject cube;
+	//GameObject cube2;
+
+	//private GameObject[] roads;
+	//private GameObject[] buildings;
 
 	// Use this for initialization
 	void Start () {
 		Random.seed = (int)System.DateTime.Now.Ticks;
 
-		roadNetwork = gameObject.AddComponent<Roads> ();
-		houses = gameObject.AddComponent<Buildings> ();
+		road = gameObject.AddComponent<Roads> ();
+		building = gameObject.AddComponent<Buildings> ();
 
+//		GameObject cube = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), new Vector3 (1.0f, 1.0f, 1.0f), new Vector3 (10.0f, 10.0f, 10.0f), null, new Vector2 (1.0f, 1.0f), "Building");
+//		GameObject cube2 = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), new Vector3 (1.0f, 1.0f, 1.0f), new Vector3 (10.0f, 0.0f, 10.0f), null, new Vector2 (1.0f, 1.0f), "Building");
+//		cube2.transform.SetParent (cube.transform, false);
+		
 		//roads = new GameObject[numRows * numColumns];
 
 		Init ();
@@ -101,6 +108,9 @@ public class Build : MonoBehaviour {
 		Vector3 buildingPos;
 		Vector3 buildingScale;
 
+		int buildingNum = 0;
+		int roadNum = 0;
+
 		for (int i = 0; i < numColumns; i++) {
 			if (i == 0 || i == numColumns - 1) {
 				plotScale.x = Random.Range (minYardScale.x, maxYardScale.x);
@@ -114,24 +124,25 @@ public class Build : MonoBehaviour {
 					plotScale.z = Random.Range (minLotScale.z, maxLotScale.z);
 				}
 
-				plotScale.y = (int)Random.Range (minYardScale.y, maxYardScale.y);
-
-				// Buildings
-				if (i == 0 || i == numColumns - 1 || j == 0 || j == numRows - 1) {
-					houses.SuburbanHouse (plotScale, plotPos, roofTex, windowTex, doorTex, houseTex);
-				}
-
-				else {
-					houses.TownHouse (plotScale, plotPos, roofTex, windowTex, doorTex, townTex);
-				}
-
-
 				// Plot
 				plotScale = new Vector3 (plotScale.x, 0.0f, plotScale.z);
 				Vector3 grassPos = plotPos + 0.5f*plotScale;
 				Vector3 grassScale = new Vector3 (plotScale.x, plotScale.z, 0.1f);
-				SetupPrimitive(PrimitiveType.Quad, new Vector3(90.0f,0.0f,0.0f), grassScale, grassPos, grassTex, 0.1f*grassScale, "Road");
-				roadNetwork.RoadSection (plotScale, plotPos, streetSpace, roadTex, interTex);
+				GameObject plot = QuadMesh (plotScale, grassTex, 0.1f, "Road");//SetupPrimitive(PrimitiveType.Quad, new Vector3(90.0f,0.0f,0.0f), grassScale, grassPos, grassTex, 0.1f*grassScale, "Road");
+				plot.transform.Translate(plotPos);
+				road.RoadSection (plotScale, plotPos, streetSpace, roadTex, interTex);
+
+				plotScale.y = (int)Random.Range (minYardScale.y, maxYardScale.y);
+
+				// Buildings
+				if (i == 0 || i == numColumns - 1 || j == 0 || j == numRows - 1) {
+					building.SuburbanHouse (plotScale, plot, roofTex, windowTex, doorTex, houseTex);
+				}
+
+				else {
+					//building.TownHouse (plotScale, /*plotPos*/plot, roofTex, windowTex, doorTex, townTex);
+					building.TownHouse(plot, plotScale, townTex, roofTex, windowTex, doorTex);
+				}
 
 				plotPos.z += plotScale.z+streetSpace;
 			}
@@ -164,6 +175,41 @@ public class Build : MonoBehaviour {
 		shape.tag = tag;
 
 		return shape;
+	}
+
+	protected GameObject QuadMesh(Vector3 scale, Texture texture, float textureScale, string tag)
+	{
+		GameObject quad = new GameObject ();
+		MeshFilter meshFilter = quad.AddComponent<MeshFilter>();
+		Mesh mesh = new Mesh ();
+		meshFilter.mesh = mesh;
+
+		mesh.vertices = new Vector3[] {
+			new Vector3 (0, 0, 0),
+			new Vector3 (scale.x, 0, 0),
+			new Vector3 (scale.x, 0, scale.z),
+			new Vector3 (0, 0, scale.z)
+		};
+
+		mesh.triangles = new int[] {
+			2, 1, 0,
+			0, 3, 2
+		};
+
+		mesh.uv = new Vector2[] {
+			textureScale * new Vector2 (0, 0),
+			textureScale * new Vector2 (scale.x, 0),
+			textureScale * new Vector2 (scale.x, scale.z),
+			textureScale * new Vector2 (0, scale.z)
+		};
+
+		quad.AddComponent<MeshRenderer> ().material.mainTexture = texture;
+
+		mesh.RecalculateNormals(); 
+		mesh.RecalculateBounds (); 
+		mesh.Optimize();
+
+		return quad;
 	}
 
 	//http://wiki.unity3d.com/index.php/ProceduralPrimitives
@@ -362,13 +408,13 @@ public class Build : MonoBehaviour {
 
 		position.x += bottomRadius;
 		position.z += bottomRadius;
-		cone.transform.Translate (position);
+		//cone.transform.Translate (position);
 
 		return cone;
 	}
 
 	// https://github.com/mortennobel/ProceduralMesh/blob/master/SimpleProceduralCube.cs
-	protected GameObject BoxMesh(Vector3 scale, Vector3 position, Texture texture, float textureScale, string tag)
+	protected GameObject BoxMesh(Vector3 scale, Texture texture, float textureScale, string tag)
 	{
 		GameObject box = new GameObject ();
 		MeshFilter meshFilter = box.AddComponent<MeshFilter>();
@@ -377,25 +423,25 @@ public class Build : MonoBehaviour {
 
 		mesh.vertices = new Vector3[]{
 			// face 1 (xy plane, z=0)
-			position+new Vector3(0,0,0), 
-			position+new Vector3(scale.x,0,0), 
-			position+new Vector3(scale.x,scale.y,0), 
-			position+new Vector3(0,scale.y,0), 
+			new Vector3(0,0,0), 
+			new Vector3(scale.x,0,0), 
+			new Vector3(scale.x,scale.y,0), 
+			new Vector3(0,scale.y,0), 
 			// face 2 (zy plane, x=1)
-			position+new Vector3(scale.x,0,0), 
-			position+new Vector3(scale.x,0,scale.z), 
-			position+new Vector3(scale.x,scale.y,scale.z), 
-			position+new Vector3(scale.x,scale.y,0), 
+			new Vector3(scale.x,0,0), 
+			new Vector3(scale.x,0,scale.z), 
+			new Vector3(scale.x,scale.y,scale.z), 
+			new Vector3(scale.x,scale.y,0), 
 			// face 3 (xy plane, z=1)
-			position+new Vector3(scale.x,0,scale.z), 
-			position+new Vector3(0,0,scale.z), 
-			position+new Vector3(0,scale.y,scale.z), 
-			position+new Vector3(scale.x,scale.y,scale.z), 
+			new Vector3(scale.x,0,scale.z), 
+			new Vector3(0,0,scale.z), 
+			new Vector3(0,scale.y,scale.z), 
+			new Vector3(scale.x,scale.y,scale.z), 
 			// face 4 (zy plane, x=0)
-			position+new Vector3(0,0,scale.z), 
-			position+new Vector3(0,0,0), 
-			position+new Vector3(0,scale.y,0), 
-			position+new Vector3(0,scale.y,scale.z), 
+			new Vector3(0,0,scale.z), 
+			new Vector3(0,0,0), 
+			new Vector3(0,scale.y,0), 
+			new Vector3(0,scale.y,scale.z), 
 			// face 5  (zx plane, y=1)
 //			position+new Vector3(0,scale.y,0), 
 //			position+new Vector3(scale.x,scale.y,0), 
@@ -450,8 +496,8 @@ public class Build : MonoBehaviour {
 
 		uvs.Add (new Vector2 (0.0f, 0.0f));
 		uvs.Add (new Vector2 (texScale.z, 0.0f));
-		uvs.Add (new Vector2 (texScale.z, scale.y));
-		uvs.Add (new Vector2 (0.0f, scale.y));
+		uvs.Add (new Vector2 (texScale.z, texScale.y));
+		uvs.Add (new Vector2 (0.0f, texScale.y));
 
 		mesh.triangles = triangles.ToArray();
 
@@ -459,6 +505,7 @@ public class Build : MonoBehaviour {
 
 		box.AddComponent<MeshRenderer> ().material.mainTexture = texture;
 
+		// Normals ok?
 		mesh.RecalculateNormals(); 
 		mesh.RecalculateBounds (); 
 		mesh.Optimize();
@@ -586,6 +633,10 @@ public class Build : MonoBehaviour {
 		}
 		mesh.uv = new Vector2[] { new Vector2 (0, 0), new Vector2 (0.5f*texScale.x, texScale.y), new Vector2 (texScale.x, 0) };
 		triangle.AddComponent<MeshRenderer> ().material.mainTexture = roofTex;
+
+		mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
+		mesh.Optimize();
 
 		return triangle;
 	}

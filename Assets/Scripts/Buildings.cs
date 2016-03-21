@@ -16,13 +16,13 @@ public class Buildings : Build {
 		Vector3 houseRotation = new Vector3(0.0f, 0.0f, 0.0f);
 		float texScale = 0.3f;
 
-		block = BoxMesh (houseScale, housePosition, buildingTex, texScale, "Building");//SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
+		//block = BoxMesh (houseScale, housePosition, buildingTex, texScale, "Building");//SetupPrimitive(PrimitiveType.Cube, houseRotation, houseScale, housePosition, null, texScale, "Building");
 
 
 		if (roofTex != null)
 		{
 			//roofBlocks = new GameObject[5];
-			roofBlocks = RightAngleRoof(0, scale, position, roofTex);
+			//roofBlocks = RightAngleRoof(0, scale, position, roofTex);
 		}
 
 		if (windowTex != null)
@@ -31,90 +31,105 @@ public class Buildings : Build {
 		}
 	}
 
-	public void SuburbanHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex, Texture buildingTex)
+	public void SuburbanHouse(Vector3 plotScale, /*Vector3 plotPosition*/ GameObject plot, Texture roofTex, Texture windowTex, Texture doorTex, Texture buildingTex)
 	{
 		Vector3 buildingScale;
 		buildingScale.x = Random.Range(minHouseScale.x, plotScale.x);
 		buildingScale.y = plotScale.y;
 		buildingScale.z = Random.Range(minHouseScale.z, plotScale.z);
 
-		Vector3 buildingPos = plotPosition;
-		buildingPos.x += Random.Range(0, plotScale.x - buildingScale.x);
-		buildingPos.z += Random.Range(0, plotScale.z - buildingScale.z);
+		Vector3 offset = new Vector3 (Random.Range (0, plotScale.x - buildingScale.x), 0, Random.Range (0, plotScale.z - buildingScale.z));
 
-		MakeBuilding(buildingScale, buildingPos, roofTex, windowTex, buildingTex);
+		GameObject building = BoxMesh(buildingScale, buildingTex, 0.3f, "Building");
+		building.transform.SetParent (plot.transform, false);
+		building.transform.Translate (offset);
+		GameObject[] roof = RightAngleRoof (0, buildingScale, new Vector3 (0, 0, 0), roofTex, buildingTex);
+		for (int i = 0; i < roof.Length; i++) {
+			roof[i].transform.SetParent (building.transform, false);
+		}
 
 		// doors, need path (single door with uv?)
-		if (buildingPos.z - plotPosition.z > plotPosition.z + plotScale.z - (buildingPos.z + buildingScale.z)) {
-			Vector3 doorScale = new Vector3 (2.0f, 3.0f, 0.1f);
-			Vector3 doorPos = new Vector3 (buildingPos.x + (int)Random.Range (0.5f*doorScale.x, buildingScale.x-0.5f*doorScale.x), buildingPos.y + 0.5f*doorScale.y, buildingPos.z - 0.02f);
-			SetupPrimitive (PrimitiveType.Quad, new Vector3 (0.0f, 0.0f, 0.0f), doorScale, doorPos, doorTex, new Vector2 (1.0f, 1.0f), "Building");
-		} else {
-			Vector3 doorScale = new Vector3 (2.0f, 3.0f, 0.1f);
-			Vector3 doorPos = new Vector3 (buildingPos.x + (int)Random.Range (0.5f*doorScale.x, buildingScale.x-0.5f*doorScale.x), buildingPos.y + 0.5f*doorScale.y, buildingPos.z + buildingScale.z + 0.02f);
-			SetupPrimitive (PrimitiveType.Quad, new Vector3 (0.0f, 180.0f, 0.0f), doorScale, doorPos, doorTex, new Vector2 (1.0f, 1.0f), "Building");
+		Vector3 doorScale = new Vector3 (2.0f, 0.0f, 3.0f);
+		GameObject door = QuadMesh (doorScale, doorTex, 1.0f, "Building");
+		door.transform.SetParent (building.transform, false);
+		Vector3 doorRotation = new Vector3 (-90.0f, 0.0f, 0.0f);
+		Vector3 doorOffset = new Vector3 ((int)Random.Range (0.0f, buildingScale.x-doorScale.x), 0.0f, -0.02f);
+		if (offset.z < plotScale.z - (offset.z + buildingScale.z)) {
+			doorOffset.x += doorScale.x;
+			doorOffset.z += buildingScale.z + 0.04f;
+			doorRotation.y += 180.0f;
 		}
+		door.transform.Translate (doorOffset);
+		door.transform.Rotate (doorRotation);
 
 		// garages
-		if (buildingPos.x - plotPosition.x > minHouseScale.x) {
-			Vector3 garageScale = new Vector3 (minHouseScale.x, 3.0f, 0.5f * buildingScale.z);
-			Vector3 garagePosition = buildingPos;
-			garagePosition.x -= garageScale.x;
-			//new Building (garageScale, garagePosition, null, null);
-			MakeBuilding(garageScale, garagePosition, roofTex, null, buildingTex);
+		if (offset.x > minHouseScale.x) {
+			Vector3 garageOffset = new Vector3(-minHouseScale.x, 0.0f, 0.0f);
+			GameObject garage = Garage (buildingScale, buildingTex, roofTex);
+			garage.transform.SetParent (building.transform, false);
+			garage.transform.Translate (garageOffset);
 		}
-		else if ((plotPosition.x + plotScale.x) - (buildingPos.x + buildingScale.x) > minHouseScale.x) {
-			Vector3 garageScale = new Vector3 (minHouseScale.x, 3.0f, 0.5f * buildingScale.z);
-			Vector3 garagePosition = buildingPos;
-			garagePosition.x += buildingScale.x;
-			//new Building (garageScale, garagePosition, null, null);
-			MakeBuilding(garageScale, garagePosition, roofTex, null, buildingTex);
+		else if (plotScale.x - (offset.x + buildingScale.x) > minHouseScale.x) {
+			Vector3 garageOffset = new Vector3(buildingScale.x, 0.0f, 0.0f);
+			GameObject garage = Garage (buildingScale, buildingTex, roofTex);
+			garage.transform.SetParent (building.transform, false);
+			garage.transform.Translate (garageOffset);
 		}
+
+		Windows (plot.transform.position + offset, buildingScale, windowTex);
 	}
 
-	public void TownHouse(Vector3 plotScale, Vector3 plotPosition, Texture roofTex, Texture windowTex, Texture doorTex, Texture buildingTex)
+	private GameObject Garage(Vector3 buildingScale, Texture buildingTexture, Texture roofTexture)
 	{
-		Vector3 buildingScale;// = plotScale;
-		buildingScale.x = (int)Random.Range(minBlockScale.x, plotScale.x);
-		buildingScale.y = plotScale.y;
-		buildingScale.z = (int)Random.Range(minBlockScale.z, plotScale.z);
+		Vector3 garageScale = new Vector3 (minHouseScale.x, 3.0f, 0.5f * buildingScale.z);
+		GameObject garage = BoxMesh(garageScale, buildingTexture, 0.3f, "Building");
+		GameObject[] roof = RightAngleRoof (0, garageScale, new Vector3 (0, 0, 0), roofTexture, buildingTexture);
+		for (int i = 0; i < roof.Length; i++) {
+			roof[i].transform.SetParent (garage.transform, false);
+		}
 
-		Vector3 buildingPos = plotPosition;
-		buildingPos.x += Random.Range(0, plotScale.x - buildingScale.x);
-		buildingPos.z += Random.Range(0, plotScale.z - buildingScale.z);
+		return garage;
+	}
 
-		Vector3 thisPos = buildingPos;
-		while (thisPos.x < plotPosition.x+plotScale.x - buildingScale.x) {
-			while (thisPos.z < plotPosition.z+plotScale.z - buildingScale.z) {
-				
-				if (buildingScale.x == buildingScale.z) ConeMesh(true, buildingScale, thisPos, buildingTex, 0.5f, "Building");
-				else MakeBuilding(buildingScale, thisPos, roofTex, windowTex, buildingTex);
+	public void TownHouse(GameObject plot, Vector3 plotScale, Texture buildingTex, Texture roofTex, Texture windowTex, Texture doorTex)
+	{
+		Vector3 offset = new Vector3(Random.Range(0, plotScale.x - minBlockScale.x), 0, Random.Range(0, plotScale.z - minBlockScale.z));
+		Vector3 scale;// = new Vector3 (Random.Range (minBlockScale.x, plotScale.x - offset.x), Random.Range (minBlockScale.y, maxBlockScale.y - offset.y), Random.Range (minBlockScale.z, plotScale.z - offset.z));
+		while (offset.x + minBlockScale.x <= plotScale.x) {
+			scale.x = Random.Range (minBlockScale.x, plotScale.x - offset.x);
+			while (offset.z + minBlockScale.z <= plotScale.z) {
+				scale.z = Random.Range (minBlockScale.z, plotScale.z - offset.z);
+				scale.y = (int)Random.Range (minBlockScale.y, maxBlockScale.y);
+				Vector3 thisScale = scale;
+				Vector3 thisOffset = offset;
+				while (thisOffset.y + minBlockScale.y <= maxBlockScale.y) {
+					GameObject building = BoxMesh (thisScale, buildingTex, 0.3f, "Building");
+					building.transform.SetParent (plot.transform, false);
+					building.transform.Translate (thisOffset);
 
-				//vertical stacking
-				Vector3 oldScale = buildingScale;
-				Vector3 oldPos = thisPos;
-//				Vector3 newScale = oldScale;
-//				Vector3 newPos = oldPos;
-				while (oldPos.y + oldScale.y < maxBlockScale.y-minBlockScale.y && oldScale.x > minBlockScale.x+1.0f && oldScale.z > minBlockScale.z+1.0f) {
-//					if (newScale.x == newScale.z) ConeMesh(true, newScale, newPos, buildingTex, 0.5f, "Building");
-//					else MakeBuilding(newScale, newPos, roofTex, windowTex, buildingTex);
+					// laggyyyyy
+					if (windowTex != null)
+					{
+						Windows (plot.transform.position+thisOffset, thisScale, windowTex);
+					}
 
-					Vector3 newScale = new Vector3 ((int)Random.Range (minBlockScale.x, oldScale.x), (int)Random.Range (minBlockScale.y, maxBlockScale.y - oldScale.y), (int)Random.Range (minBlockScale.z, oldScale.z));
-					Vector3 newPos = new Vector3 (Random.Range (oldPos.x, oldPos.x + oldScale.x - newScale.x), oldPos.y + oldScale.y, Random.Range (oldPos.z, oldPos.z + oldScale.z - newScale.z));
-					
-					if (newScale.x == newScale.z) ConeMesh(true, newScale, newPos, buildingTex, 0.5f, "Building");
-					else MakeBuilding(newScale, newPos, roofTex, windowTex, buildingTex);
-					oldScale = newScale;
-					oldPos = newPos;
+					GameObject[] roof = RightAngleRoof (0, thisScale, new Vector3(0,0,0), roofTex, buildingTex);
+					for (int i = 0; i < roof.Length; i++) {
+						roof [i].transform.SetParent (building.transform, false);
+						//roof [i].transform.Translate (0.1f, 0, 0.1f);
+					}
+
+					thisOffset.y += thisScale.y;
+
+					Vector3 oldScale = thisScale;
+					thisScale = new Vector3 (Random.Range (minBlockScale.x, thisScale.x), (int)Random.Range (minBlockScale.y, maxBlockScale.y), Random.Range (minBlockScale.z, thisScale.z));
+
+					thisOffset.x += Random.Range (0, oldScale.x - thisScale.x);
+					thisOffset.z += Random.Range (0, oldScale.z - thisScale.z);
 				}
-
-				thisPos.z += buildingScale.z;
-				buildingScale.y = (int)Random.Range (minBlockScale.y, maxBlockScale.y);
-				buildingScale.z = Random.Range (minBlockScale.z, maxBlockScale.z);
+				offset.z += scale.z;
 			}
-			thisPos.x += buildingScale.x;
-			thisPos.z = buildingPos.z;
-			buildingScale.x = Random.Range (minBlockScale.x, maxBlockScale.x);
+			offset.x += scale.x;
 		}
 	}
 
@@ -188,7 +203,7 @@ public class Buildings : Build {
 	}
 
 	// Fix block array
-	private GameObject[] RightAngleRoof(int roofNum, Vector3 houseScale, Vector3 position, Texture roofTex)
+	private GameObject[] RightAngleRoof(int roofNum, Vector3 houseScale, Vector3 position, Texture roofTex, Texture buildingTex)
 	{
 		GameObject[] roofBlocks;
 		roofBlocks = new GameObject[5];
@@ -221,12 +236,12 @@ public class Buildings : Build {
 				new Vector3 (position.x, position.y + houseScale.y, position.z),
 				new Vector3 (position.x, position.y + houseScale.y + roofHeight, position.z + 0.5f*houseScale.z),
 				new Vector3 (position.x, position.y + houseScale.y, position.z + houseScale.z)};
-			roofBlocks [2] = TriangleMesh (vertPos, true, null, texScale);
+			roofBlocks [2] = TriangleMesh (vertPos, true, buildingTex, texScale);
 
 			for (int i = 0; i < vertPos.Length; i++) {
 				vertPos [i].x += houseScale.x;
 			}
-			roofBlocks [3] = TriangleMesh (vertPos, false, null, texScale);
+			roofBlocks [3] = TriangleMesh (vertPos, false, buildingTex, texScale);
 		}
 
 		else {
