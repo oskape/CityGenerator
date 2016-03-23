@@ -3,31 +3,61 @@ using System.Collections;
 
 public class Roads : Build {
 
-//	public Texture roadTex;
-//	public Texture interTex;
+	private GameObject intersection;
+	private GameObject stretch;
 
-	public GameObject[] RoadSection(Vector3 scale, Vector3 position, float streetSpace, Texture roadTex, Texture interTex)
+	public void InitIntersection(Vector2 scale, Vector2 textureScale, Texture texture)
+	{
+		intersection = QuadMesh (scale, texture, textureScale, "Road");
+		intersection.SetActive (false);
+	}
+
+	// not used
+	public void InitStretch(Vector2 scale, Vector2 textureScale, Texture texture)
+	{
+		stretch = QuadMesh (scale, texture, textureScale, "Road");
+		stretch.SetActive (false);
+	}
+
+	public GameObject[] RoadSection(Vector2 plotScale, float streetSpace, Texture roadTex, Texture interTex)
 	{
 		GameObject[] segments = new GameObject[4];
 
 		Vector3 flatRotation = new Vector3(90.0f, 0.0f, 0.0f);
-		Vector3 bottomLeftCorner = position - 0.5f*new Vector3(streetSpace, 0, streetSpace);
-		Vector3 bottomRightCorner = new Vector3 (bottomLeftCorner.x+scale.x+streetSpace, 0.01f, bottomLeftCorner.z);
-		Vector3 segmentScale = new Vector3(streetSpace, streetSpace, 0.1f);
-		Vector2 texScale = new Vector2(1.0f, 1.0f);
-		segments[0] = SetupPrimitive(PrimitiveType.Quad, flatRotation, segmentScale, bottomLeftCorner, interTex, texScale, "Road");
-		segments[1] = SetupPrimitive(PrimitiveType.Quad, flatRotation, segmentScale, bottomRightCorner, interTex, texScale, "Road");
+		Vector3 segmentPosition = new Vector3(-streetSpace, 0.01f, -streetSpace);
+		Vector2 segmentScale = new Vector3(streetSpace, streetSpace);
+		Vector2 textureScale = new Vector2(1.0f, 1.0f);
 
-		Vector3 longScale = new Vector3(streetSpace, scale.z, 0.1f);
-		Vector3 longPosition = new Vector3(position.x-0.5f*streetSpace, position.y, position.z+0.5f*scale.z);
-		texScale = new Vector2(1.0f, longScale.y);
-		segments[2] = SetupPrimitive(PrimitiveType.Quad, flatRotation, longScale, longPosition, roadTex, texScale, "Road");
+		// bottom left corner
+		segments [0] = (GameObject)Instantiate(intersection, segmentPosition, Quaternion.identity);
+		segments [0].SetActive (true);
+//		segments [0] = QuadMesh (segmentScale, interTex, textureScale, "Road");
+//		segments [0].transform.Translate (segmentPosition);
 
-		Vector3 wideRotation = new Vector3(90.0f, 0.0f, 90.0f);
-		Vector3 wideScale = new Vector3(streetSpace, scale.x, 0.1f);
-		Vector3 widePosition = new Vector3(position.x+0.5f*scale.x, position.y, position.z-0.5f*streetSpace);
-		texScale = new Vector2(1.0f, wideScale.y);
-		segments[3] = SetupPrimitive(PrimitiveType.Quad, wideRotation, wideScale, widePosition, roadTex, texScale, "Road");
+		// bottom right corner
+		segmentPosition.x += segmentScale.x + plotScale.x;
+		segmentPosition.y += 0.01f;
+		segments [1] = (GameObject)Instantiate (intersection, segmentPosition, Quaternion.identity);
+		segments [1].SetActive (true);
+//		segments [1] = QuadMesh (segmentScale, interTex, textureScale, "Road");
+//		segments [1].transform.Translate (segmentPosition);
+
+		// along left
+		segmentScale = new Vector2(streetSpace, plotScale.y);
+		segmentPosition = new Vector3(-streetSpace, 0, 0);
+		textureScale = new Vector2(1.0f, segmentScale.y);
+		segments [2] = QuadMesh (segmentScale, roadTex, textureScale, "Road");
+		segments [2].transform.Translate (segmentPosition);
+		// worth reconsidering instantiating if switching to segmented roadblocks rather than full sections (scaling is messy otherwise)
+//		segments [2] = (GameObject)Instantiate (stretch, segmentPosition, Quaternion.identity);
+
+		segmentScale = new Vector3(streetSpace, plotScale.x);
+		segmentPosition.x += streetSpace;
+		textureScale = new Vector2(1.0f, segmentScale.y);
+		segments [3] = QuadMesh (segmentScale, roadTex, textureScale, "Road");
+		segments [3].transform.Translate (segmentPosition);
+		segments [3].transform.Rotate (0.0f, 90.0f, 0.0f);
+//		segments [3] = (GameObject)Instantiate (stretch, segmentPosition, Quaternion.Euler (0.0f, 90.0f, 0.0f));
 
 		return segments;
 	}

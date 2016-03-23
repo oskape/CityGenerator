@@ -1,10 +1,19 @@
 fileFormatVersion: 2
 guid: cf8ce26a38391da4d94b41ec91b9fdab
-timeCreated: 1457885701
+timeCreated: 1458661647
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - roadTex: {instanceID: 0}
+  - interTex: {instanceID: 0}
+  - roofTex: {instanceID: 0}
+  - windowTex: {instanceID: 0}
+  - grassTex: {instanceID: 0}
+  - doorTex: {instanceID: 0}
+  - houseTex: {instanceID: 0}
+  - townTex: {instanceID: 0}
+  - windowPrefab: {fileID: 162118, guid: dc31f908afb089a45b27f4ce1e3c89b2, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
