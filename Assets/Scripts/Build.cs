@@ -12,7 +12,7 @@ public class Build : MonoBehaviour {
 	// stairs?
 	// path
 	// more window setups
-	// texture buildings and garages
+	// main roads
 
 	// Fixes:
 	// door-window-roof clipping
@@ -21,71 +21,94 @@ public class Build : MonoBehaviour {
 	// Methods:
 	// 2D garage / door / plot placement and pimping
 	// rotation
-	// symmetric displacement
-	// texture-bool
-	// re-organise and -scale
 	// reuse designs
 	// second pass?
-	// only step inwards on one side?
 
 	// Dissertation:
 	// performance evaluation (size/area, quantity (20x20), primitive vs mesh, hardware)
 	// write stuff
 
 	//http://texturelib.com/texture/?path=/Textures/road/road/road_road_0019
+	//http://texturelib.com/texture/?path=/Textures/road/bare%20asphalt/road_bare_asphalt_0035
 	//http://texturelib.com/texture/?path=/Textures/roof/roof_0075
+	//http://texturelib.com/texture/?path=/Textures/roof/roof_0101
 	//http://texturelib.com/texture/?path=/Textures/grass/grass/grass_grass_0131
 	//http://texturelib.com/texture/?path=/Textures/doors/wood%20doors/doors_wood_doors_0201
+	//http://texturelib.com/texture/?path=/Textures/doors/metal%20doors/doors_metal_doors_0139
 	//http://texturelib.com/texture/?path=/Textures/brick/modern/brick_modern_0123
 	//http://texturelib.com/texture/?path=/Textures/wood/planks%20new/wood_planks_new_0042
-	public Texture roadTex;
-	public Texture interTex;
-	public Texture roofTex;
-	public Texture windowTex;
-	public Texture grassTex;
-	public Texture doorTex;
-	public Texture houseTex;
-	public Texture townTex;
+	//http://texturelib.com/texture/?path=/Textures/windows/windows_0197
+	//http://texturelib.com/texture/?path=/Textures/windows/windows_0192
+	[SerializeField]private Texture roadTex;
+	[SerializeField]private Texture interTex;
 
-	public int numRows = 15;
-	public int numColumns = 10;
+	[SerializeField]private Texture houseRoofTex;
+	[SerializeField]private Texture blockRoofTex;
 
-	public Vector2 minYardScale = new Vector2 (10.0f, 10.0f);
-	public Vector2 maxYardScale = new Vector2 (15.0f, 15.0f);
+	[SerializeField]private Texture myWindowTex;
+	[SerializeField]private Texture blockWindowTex;
 
-	public Vector2 minLotScale = new Vector2 (10.0f, 10.0f);
-	public Vector2 maxLotScale = new Vector2 (30.0f, 30.0f);
+	[SerializeField]private Texture grassTex;
+	[SerializeField]private Texture paveTex;
 
-	public Vector3 minHouseScale = new Vector3 (5.0f, 5.0f, 5.0f);
-	public Vector3 maxHouseScale = new Vector3 (10.0f, 10.0f, 10.0f);
+	[SerializeField]private Texture houseDoorTex;
+	[SerializeField]private Texture blockDoorTex;
 
-	public Vector3 minBlockScale = new Vector3 (5.0f, 5.0f, 5.0f);
-	public Vector3 maxBlockScale = new Vector3 (25.0f, 25.0f, 25.0f);
+	[SerializeField]private Texture[] houseTex;
+	[SerializeField]private Texture[] blockTex;
+	[SerializeField]private Texture glassTex;
 
-	public Vector2 windowScale = new Vector2 (1.0f, 1.0f);
-	public Vector2 doorScale = new Vector2 (2.0f, 3.0f);
+	[SerializeField]private Vector2 mapScale = new Vector2 (400.0f, 400.0f);
 
-	public float streetWidth = 5.0f;
+	[SerializeField]private Vector2 minYardScale = new Vector2 (10.0f, 10.0f);
+	[SerializeField]private Vector2 maxYardScale = new Vector2 (15.0f, 15.0f);
 
+	[SerializeField]private Vector2 minLotScale = new Vector2 (10.0f, 10.0f);
+	[SerializeField]private Vector2 maxLotScale = new Vector2 (30.0f, 30.0f);
+
+	[SerializeField]private Vector3 minHouseScale = new Vector3 (7.0f, 5.0f, 7.0f);
+	[SerializeField]private Vector3 maxHouseScale = new Vector3 (10.0f, 10.0f, 10.0f);
+
+	[SerializeField]private Vector3 garageScale = new Vector3(7.0f, 5.0f, 7.0f);
+
+	[SerializeField]private Vector3 minBlockScale = new Vector3 (7.0f, 5.0f, 7.0f);
+	[SerializeField]private Vector3 maxBlockScale = new Vector3 (25.0f, 25.0f, 25.0f);
+
+	[SerializeField]private int windowOdds = 2;
+	[SerializeField]private Vector2 windowScale = new Vector2 (1.0f, 1.0f);
+	[SerializeField]private Vector2 windowSpacing = new Vector2 (3.0f, 3.0f);
+	[SerializeField]private Vector2 doorScale = new Vector2 (2.0f, 3.0f);
+
+	[SerializeField]private float streetWidth = 5.0f;
+	//[SerializeField]private float mainRoadWidth = 10.0f;
+
+	private Buildings houses;
+	private Buildings blocks;
 	private Roads roads;
-	private Buildings buildings;
+
+	// not used
+	private int numRows = 15;
+	private int numColumns = 10;
 
 	// Use this for initialization
 	void Start () {
 		Random.seed = (int)System.DateTime.Now.Ticks;
 
+		houses = gameObject.AddComponent<Buildings> ();
+		blocks = gameObject.AddComponent<Buildings> ();
 		roads = gameObject.AddComponent<Roads> ();
-		buildings = gameObject.AddComponent<Buildings> ();
 
-//		GameObject cube = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), new Vector3 (1.0f, 1.0f, 1.0f), new Vector3 (10.0f, 10.0f, 10.0f), null, new Vector2 (1.0f, 1.0f), "Building");
-//		GameObject cube2 = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), new Vector3 (1.0f, 1.0f, 1.0f), new Vector3 (10.0f, 0.0f, 10.0f), null, new Vector2 (1.0f, 1.0f), "Building");
-//		cube2.transform.SetParent (cube.transform, false);
-		
-		//roads = new GameObject[numRows * numColumns];
-//		#if UNITY_EDITOR
-//		#endif
-		//GameObject window1337 = (GameObject)Instantiate(Resources.Load("Window") as GameObject, new Vector3(0.0f, 1.0f, 0.0f), Quaternion.identity);
-		//window1337.SetActive (true);
+		houses.InitPlots (grassTex);
+		houses.InitBuildings (false, minHouseScale, maxHouseScale, garageScale, houseTex, houseRoofTex);
+		houses.InitWindows (windowOdds, windowScale, windowSpacing, myWindowTex);
+		houses.InitDoors (doorScale, houseDoorTex);
+
+		blocks.InitPlots (paveTex);
+		blocks.InitBuildings (true, minBlockScale, maxBlockScale, garageScale, blockTex, blockRoofTex);
+		blocks.InitWindows (windowOdds, windowScale, windowSpacing, blockWindowTex);
+		blocks.InitDoors (doorScale, blockDoorTex);
+
+		roads.InitRoads (streetWidth, roadTex, interTex);
 
 		Init ();
 	}
@@ -103,18 +126,69 @@ public class Build : MonoBehaviour {
 
 	public void Init()
 	{
-		buildings.InitWindow (windowScale, new Vector2 (1.0f, 1.0f), windowTex);
-		buildings.InitDoor (doorScale, new Vector2 (1.0f, 1.0f), doorTex);
-		roads.InitIntersection (new Vector2 (streetWidth, streetWidth), new Vector2 (1.0f, 1.0f), interTex);
-//		roads.InitStretch (new Vector2 (streetWidth, streetWidth), new Vector2 (1.0f, 1.0f), roadTex);
+		GeneratePlots ();
+//		ColumnsShareWidth ();
+	}
 
+	private void GeneratePlots()
+	{
+		Vector3 currentPos = new Vector3(0.0f,0.0f,0.0f);
+
+		while (currentPos.x < mapScale.x && currentPos.z < mapScale.y) {
+			Vector2 plotScale = new Vector2 (Random.Range (minLotScale.x, maxLotScale.x), Random.Range (minLotScale.y, maxLotScale.y));
+			Vector3 plotPos = currentPos;
+
+			if (plotScale.x > plotScale.y) {
+				
+				// Generate row with shared length
+				while (plotPos.x + plotScale.x < mapScale.x) {
+					bool house = false;
+					if (Random.Range (0.0f, mapScale.x - currentPos.x) < 0.5f * mapScale.x)
+						house = true;
+					CreatePlot (plotScale, plotPos, house);
+
+					plotPos.x += plotScale.x + streetWidth;
+					plotScale.x = Random.Range (minLotScale.x, maxLotScale.x);
+				}
+
+				currentPos.z += plotScale.y + streetWidth;
+			} else {
+
+				// Generate column with shared width
+				while (plotPos.z + plotScale.y < mapScale.y) {
+					bool house = false;
+					if (Random.Range (0.0f, mapScale.y - currentPos.z) < 0.5f * mapScale.y)
+						house = true;
+					CreatePlot (plotScale, plotPos, house);
+
+					plotPos.z += plotScale.y + streetWidth;
+					plotScale.y = Random.Range (minLotScale.y, maxLotScale.y);
+				}
+
+				currentPos.x += plotScale.x + streetWidth;
+			}
+		}
+	}
+
+	private void CreatePlot(Vector2 plotScale, Vector3 plotPosition, bool house)
+	{
+		GameObject plot;
+		if (house)
+			plot = houses.SetupPlot (plotScale);
+		else
+			plot = blocks.SetupPlot (plotScale);
+		plot.transform.Translate (plotPosition);
+
+		GameObject[] roadSection = roads.RoadSection (plotScale);
+		for (int a = 0; a < roadSection.Length; a++) {
+			roadSection [a].transform.SetParent (plot.transform, false);
+		}
+	}
+
+	private void ColumnsShareWidth()
+	{
 		Vector3 plotPos = new Vector3(0.0f,0.0f,0.0f);
 		Vector2 plotScale = new Vector3(0.0f, 0.0f);
-		Vector3 buildingPos;
-		Vector3 buildingScale;
-
-		int buildingNum = 0;
-		int roadNum = 0;
 
 		for (int i = 0; i < numColumns; i++) {
 			if (i == 0 || i == numColumns - 1) {
@@ -129,25 +203,15 @@ public class Build : MonoBehaviour {
 					plotScale.y = Random.Range (minLotScale.y, maxLotScale.y);
 				}
 
-				// Plot
-				GameObject plot = QuadMesh (plotScale, grassTex, 0.05f*plotScale, "Road");
-				plot.transform.Translate(plotPos);
-				GameObject[] roadSection = roads.RoadSection (plotScale, streetWidth, roadTex, interTex);
-				for (int a = 0; a < roadSection.Length; a++){
-					roadSection[a].transform.SetParent(plot.transform, false);
-				}
-				
-				// Buildings
+				// Plots
 				if (i == 0 || i == numColumns - 1 || j == 0 || j == numRows - 1) {
-					GameObject house = buildings.SuburbanHouse (plotScale, roofTex, windowTex, doorTex, houseTex);
-					house.transform.SetParent (plot.transform, false);
+					GameObject plot = houses.SetupPlot (plotScale);
+					plot.transform.Translate (plotPos);
 				}
 
 				else {
-					GameObject[] blocks = buildings.TownHouse(plotScale, townTex, roofTex, windowTex, doorTex);
-					for (int a = 0; a < blocks.Length; a++) {
-						blocks [a].transform.SetParent (plot.transform, false);
-					}
+					GameObject plot = blocks.SetupPlot (plotScale);
+					plot.transform.Translate (plotPos);
 				}
 
 				plotPos.z += plotScale.y + streetWidth;
@@ -219,7 +283,7 @@ public class Build : MonoBehaviour {
 	}
 
 	//http://wiki.unity3d.com/index.php/ProceduralPrimitives
-	protected GameObject ConeMesh(bool isCylinder, Vector3 scale, Texture texture, /*float textureScale,*/ string tag)
+	protected GameObject ConeMesh(bool isCylinder, Vector3 scale, Texture texture, float textureScale, string tag)
 	{
 		GameObject cone = new GameObject ();
 		MeshFilter filter = cone.AddComponent<MeshFilter>();
@@ -342,8 +406,8 @@ public class Build : MonoBehaviour {
 			u += 2;
 			u_sides++;
 		}
-		uvs[u] = new Vector2(1f, 1f);
-		uvs[u + 1] = new Vector2(1f, 0f);
+		uvs[u] = textureScale*new Vector2(1.0f, 1.0f);
+		uvs[u + 1] = textureScale*new Vector2(1f, 0f);
 		#endregion 
 
 		#region Triangles
@@ -624,13 +688,13 @@ public class Build : MonoBehaviour {
 		return box;
 	}
 
-	protected GameObject TriangleMesh(Vector3[] position, bool reversed, Texture roofTex, Vector2 texScale)
+	protected GameObject TriangleMesh(Vector3[] positions, bool reversed, Texture roofTex, Vector2 texScale)
 	{
 		GameObject triangle = new GameObject ();
 		Mesh mesh = new Mesh ();
 		triangle.AddComponent<MeshFilter> ().mesh = mesh;
 
-		mesh.vertices = position;
+		mesh.vertices = positions;
 		//triangle.transform.RotateAround(// (0.0f, 90.0f, 0.0f);
 		if (reversed) {
 			mesh.triangles = new int[] { 2, 1, 0 };
