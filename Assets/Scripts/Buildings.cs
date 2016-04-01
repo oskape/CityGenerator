@@ -17,7 +17,6 @@ public class Buildings : Build {
 
 	feature[] availableFeatures;
 	List<feature> remainingFeatures;
-	feature garage;
 
 	public void InitBuildings(bool aStacking, Texture aPlotTexture, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, float aFloorHeight, Texture[] aBuildingTextures, Texture aRoofTexture)
 	{
@@ -94,11 +93,6 @@ public class Buildings : Build {
 				Vector3 thisScale = buildingScale;
 				Vector3 thisOffset = buildingOffset;
 				bool goneCircular = false;
-
-				remainingFeatures = new List<feature> ();
-				for (int i = 0; i < availableFeatures.Length; i++) {
-					remainingFeatures.Add (availableFeatures [i]);
-				}
 
 				while (thisOffset.y + thisScale.y <= maxBuildingScale.y) {
 
@@ -188,12 +182,40 @@ public class Buildings : Build {
 
 	private void AddFeatures(GameObject building, Vector3 thisScale, Vector4 plotSpaces)
 	{
+		bool doorAdded = false;
+		feature door = new feature();
+
+		remainingFeatures = new List<feature> ();
+		for (int i = 0; i < availableFeatures.Length; i++) {
+			if (availableFeatures [i].name != "Door") {
+				remainingFeatures.Add (availableFeatures [i]);
+			} else {
+				door = availableFeatures [i];
+			}
+		}
+
+		if (Random.Range (0, 4) == 0 && !doorAdded) {
+			remainingFeatures.Add (door);
+			doorAdded = true;
+		}
 		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.x), 0.0f, new Vector3 (0.0f, 0.0f, -0.01f));
 
+		if (Random.Range (0, 3) == 0 && !doorAdded) {
+			remainingFeatures.Add (door);
+			doorAdded = true;
+		}
 		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.y), 180.0f, new Vector3 (-thisScale.x, 0.0f, -thisScale.z - 0.01f));
 
+		if (Random.Range (0, 2) == 0 && !doorAdded) {
+			remainingFeatures.Add (door);
+			doorAdded = true;
+		}
 		FeatureWall(building, new Vector3(thisScale.z, thisScale.y, plotSpaces.z), 90.0f, new Vector3(-thisScale.z, 0.0f, -0.01f));
 
+		if (Random.Range (0, 1) == 0 && !doorAdded) {
+			remainingFeatures.Add (door);
+			doorAdded = true;
+		}
 		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.w), -90.0f, new Vector3 (0.0f, 0.0f, -thisScale.x - 0.01f));
 	}
 
@@ -211,11 +233,12 @@ public class Buildings : Build {
 				feature thisFeature;
 				do {
 					thisFeature = remainingFeatures.ToArray () [Random.Range (0, remainingFeatures.ToArray ().Length)];
-				} while ((thisFeature.grounded && position.y != initialPosition.y));// && (position.x + thisFeature.spacing.x + thisFeature.scale.x > wallScale.x || position.y + 2.0f*thisFeature.spacing.y + thisFeature.scale.y >= wallScale.y || thisFeature.scale.z > wallScale.z));
+				} while (thisFeature.grounded && position.y + building.transform.position.y > 0.0f);
 
 				if (position.x + 2.0f*thisFeature.spacing.x + thisFeature.scale.x <= wallScale.x && 
 					position.y + 2.0f*thisFeature.spacing.y + thisFeature.scale.y <= wallScale.y && 
-					position.z + thisFeature.scale.z + thisFeature.spacing.z < wallScale.z) {
+					position.z + thisFeature.scale.z + thisFeature.spacing.z <= wallScale.z) {
+
 					position.x += thisFeature.spacing.x;
 					Vector3 thisPosition = position;
 
@@ -277,11 +300,11 @@ public class Buildings : Build {
 			if (buildingTextures.Length != 0)
 				thisTexture = buildingTextures [0];
 			
-			roofBlock = TriangleMesh (vertPos, true, thisTexture, new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight));
+			roofBlock = TriangleMesh (vertPos, true, thisTexture, new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight), "Building");
 			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
 			roofBlocks.Add (roofBlock);
 
-			roofBlock = TriangleMesh (vertPos, false, thisTexture, new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight));
+			roofBlock = TriangleMesh (vertPos, false, thisTexture, new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight), "Building");
 			roofBlock.transform.Translate (houseScale.x, houseScale.y, 0.0f);
 			roofBlocks.Add (roofBlock);
 		}
@@ -297,22 +320,22 @@ public class Buildings : Build {
 			Vector2 texScaleLong = new Vector2 (houseScale.z, Mathf.Sqrt (Mathf.Pow (roofHeight, 2) + Mathf.Pow (houseScale.x * 0.5f, 2)));
 
 			Vector3[] vertPos = new Vector3[] { cornerSW, top, cornerSE };
-			GameObject roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleWide);
+			GameObject roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleWide, "Building");
 			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
 			roofBlocks.Add (roofBlock);
 
 			vertPos = new Vector3[] { cornerSE, top, cornerNE };
-			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleLong);
+			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleLong, "Building");
 			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
 			roofBlocks.Add (roofBlock);
 
 			vertPos = new Vector3[] { cornerNE, top, cornerNW };
-			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleWide);
+			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleWide, "Building");
 			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
 			roofBlocks.Add (roofBlock);
 
 			vertPos = new Vector3[] { cornerNW, top, cornerSW };
-			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleLong);
+			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleLong, "Building");
 			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
 			roofBlocks.Add (roofBlock);
 		}

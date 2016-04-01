@@ -18,14 +18,18 @@ public class Build : MonoBehaviour {
 
 	// Fixes:
 	// feature-roof clipping
-	// buffer between road and building
+	// buffer between road and building or prevent adding features (doors) when too close
+	// window click crash?
+	// opposite corner plots don't match map rectangle
 
 	// Methods:
 	// rotation
 	// reuse designs
 	// second pass?
-	// guarantee door / increase door side variation
-	// control garage direction
+	// culling
+	// guarantee door / increase door offset variation
+	// control garage / door direction
+	// split large house plots?
 
 	// Dissertation:
 	// performance evaluation (size/area, quantity (20x20), primitive vs mesh, instantiating, hardware)
@@ -107,6 +111,7 @@ public class Build : MonoBehaviour {
 
 	public struct feature
 	{
+		public string name;
 		public Vector3 spacing;
 		public Vector3 scale;
 		public bool grounded;
@@ -115,9 +120,10 @@ public class Build : MonoBehaviour {
 		public GameObject shape;
 	}
 
-	private feature InitFeature(Vector3 scale, Vector3 spacing, bool grounded, bool single, Vector2 odds, GameObject shape)
+	private feature InitFeature(string name, Vector3 scale, Vector3 spacing, bool grounded, bool single, Vector2 odds, GameObject shape)
 	{
 		feature thisFeature;
+		thisFeature.name = name;
 		thisFeature.scale = scale;
 		thisFeature.spacing = spacing;
 		thisFeature.grounded = grounded;
@@ -133,27 +139,27 @@ public class Build : MonoBehaviour {
 	{
 		houseFeatures = new List<feature> ();
 
-		houseFeatures.Add (InitFeature(windowScale, windowSpacing, false, false, houseWindowOdds, QuadMesh (windowScale, houseWindowTexture, new Vector2 (1.0f, 1.0f), "Window")));
+		houseFeatures.Add (InitFeature("Door", doorScale, doorSpacing, true, true, doorOdds, QuadMesh (doorScale, houseDoorTexture, new Vector2(1.0f, 1.0f), "Door")));
 
-		houseFeatures.Add (InitFeature(doorScale, doorSpacing, true, true, doorOdds, QuadMesh (doorScale, houseDoorTexture, new Vector2(1.0f, 1.0f), "Door")));
+		houseFeatures.Add (InitFeature("Window", windowScale, windowSpacing, false, false, houseWindowOdds, QuadMesh (windowScale, houseWindowTexture, new Vector2 (1.0f, 1.0f), "Window")));
 
-		houseFeatures.Add (InitFeature(garageScale, garageSpacing, true, true, garageOdds, houses.Garage (garageScale, garageTexture)));
+		houseFeatures.Add (InitFeature("Garage", garageScale, garageSpacing, true, true, garageOdds, houses.Garage (garageScale, garageTexture)));
 
 		houses.SetFeatures (houseFeatures.ToArray ());
 
 
 		blockFeatures = new List<feature> ();
 
-		blockFeatures.Add (InitFeature(windowScale, windowSpacing, false, false, blockWindowOdds, QuadMesh (windowScale, blockWindowTexture, new Vector2 (1.0f, 1.0f), "Window")));
+		blockFeatures.Add (InitFeature("Door", doorScale, doorSpacing, true, true, doorOdds, QuadMesh (doorScale, blockDoorTexture, new Vector2(1.0f, 1.0f), "Door")));
 
-		blockFeatures.Add (InitFeature(doorScale, doorSpacing, true, true, doorOdds, QuadMesh (doorScale, blockDoorTexture, new Vector2(1.0f, 1.0f), "Door")));
+		blockFeatures.Add (InitFeature("Window", windowScale, windowSpacing, false, false, blockWindowOdds, QuadMesh (windowScale, blockWindowTexture, new Vector2 (1.0f, 1.0f), "Window")));
 
 		blocks.SetFeatures (blockFeatures.ToArray ());
 	}
 
 	// Use this for initialization
 	void Start () {
-		Random.seed = 1;//(int)System.DateTime.Now.Ticks;
+		Random.seed = (int)System.DateTime.Now.Ticks;
 
 		houses = gameObject.AddComponent<Buildings> ();
 		blocks = gameObject.AddComponent<Buildings> ();
@@ -380,6 +386,7 @@ public class Build : MonoBehaviour {
 	protected GameObject ConeMesh(bool isCylinder, Vector3 scale, Texture texture, float textureScale, string tag)
 	{
 		GameObject cone = new GameObject ();
+		cone.tag = tag;
 		MeshFilter filter = cone.AddComponent<MeshFilter>();
 		Mesh mesh = filter.mesh;
 		mesh.Clear();
@@ -577,6 +584,7 @@ public class Build : MonoBehaviour {
 	protected GameObject BoxMesh(Vector3 scale, Texture texture, float textureScale, string tag)
 	{
 		GameObject box = new GameObject ();
+		box.tag = tag;
 		MeshFilter meshFilter = box.AddComponent<MeshFilter>();
 		Mesh mesh = new Mesh ();
 		meshFilter.mesh = mesh;
@@ -670,9 +678,10 @@ public class Build : MonoBehaviour {
 		return box;
 	}
 
-	protected GameObject TriangleMesh(Vector3[] positions, bool reversed, Texture roofTex, Vector2 texScale)
+	protected GameObject TriangleMesh(Vector3[] positions, bool reversed, Texture roofTex, Vector2 texScale, string tag)
 	{
 		GameObject triangle = new GameObject ();
+		triangle.tag = tag;
 		Mesh mesh = new Mesh ();
 		triangle.AddComponent<MeshFilter> ().mesh = mesh;
 
@@ -697,6 +706,7 @@ public class Build : MonoBehaviour {
 	protected GameObject BoxMeshBrokenNormals(Vector3 scale, Vector3 position, Texture texture, Vector2 textureScale, string tag)
 	{
 		GameObject box = new GameObject ();
+		box.tag = tag;
 		Mesh mesh = new Mesh ();
 		box.AddComponent<MeshFilter> ().mesh = mesh;
 
