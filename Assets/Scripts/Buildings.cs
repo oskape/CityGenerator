@@ -4,20 +4,10 @@ using System.Collections.Generic;
 
 public class Buildings : Build {
 
-	private GameObject window;
-	private GameObject door;
-	private GameObject garage;
-
 	private Vector3 minBuildingScale;
 	private Vector3 maxBuildingScale;
 
-	private int windowOdds;
-	private Vector2 windowScale;
-	private Vector2 windowSpacing;
-	
-	private Vector2 doorScale;
-
-	private Vector3 garageScale;
+	private float floorHeight;
 
 	private Texture plotTexture;
 	private Texture[] buildingTextures;
@@ -25,17 +15,20 @@ public class Buildings : Build {
 
 	private bool stacking;
 
-	public void InitPlots(Texture aPlotTexture)
-	{
-		plotTexture = aPlotTexture;
-	}
+	feature[] availableFeatures;
+	List<feature> remainingFeatures;
+	feature garage;
 
-	public void InitBuildings(bool aStacking, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, Vector3 aGarageScale, Texture[] aBuildingTextures, Texture aRoofTexture)
+	public void InitBuildings(bool aStacking, Texture aPlotTexture, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, float aFloorHeight, Texture[] aBuildingTextures, Texture aRoofTexture)
 	{
 		stacking = aStacking;
 
+		plotTexture = aPlotTexture;
+
 		minBuildingScale = aMinBuildingScale;
 		maxBuildingScale = aMaxBuildingScale;
+
+		floorHeight = aFloorHeight;
 
 		buildingTextures = new Texture[aBuildingTextures.Length];
 		for (int i = 0; i < aBuildingTextures.Length; i++) {
@@ -43,36 +36,20 @@ public class Buildings : Build {
 		}
 		
 		roofTexture = aRoofTexture;
-
-		garageScale = aGarageScale;
-		garage = BoxMesh(garageScale, buildingTextures[0], 0.3f, "Building");
-		garage.SetActive (false);
 	}
 
-	public void InitWindows(int aWindowOdds, Vector2 aWindowScale, Vector2 aWindowSpacing, Texture aWindowTexture)
+	public void SetFeatures(feature[] aFeatures)
 	{
-		windowOdds = aWindowOdds;
-		windowScale = aWindowScale;
-		windowSpacing = aWindowSpacing;
-
-		window = QuadMesh (windowScale, aWindowTexture, new Vector2(1.0f, 1.0f), "Window");
-		window.SetActive (false);
+		availableFeatures = aFeatures;
 	}
 
-	public void InitDoors(Vector2 aDoorScale, Texture aDoorTexture)
-	{
-		doorScale = aDoorScale;
-		door = QuadMesh (aDoorScale, aDoorTexture, new Vector2(1.0f, 1.0f), "Door");
-		door.SetActive (false);
-	}
-
-	public GameObject SetupPlot(Vector2 plotScale)
+	public GameObject SetupPlot(Vector3 plotScale)
 	{
 		Vector3 buildingScale = new Vector3 ((int)Random.Range (minBuildingScale.x, maxBuildingScale.x), (int)Random.Range (minBuildingScale.y, maxBuildingScale.y), (int)Random.Range (minBuildingScale.z, maxBuildingScale.z));
-		buildingScale.x = Mathf.Clamp (buildingScale.x, minBuildingScale.x, plotScale.x);
-		buildingScale.z = Mathf.Clamp (buildingScale.z, minBuildingScale.z, plotScale.y);
+		buildingScale.x = Mathf.Clamp (buildingScale.x, 0, plotScale.x);
+		buildingScale.z = Mathf.Clamp (buildingScale.z, 0, plotScale.z);
 
-		Vector3 buildingOffset = new Vector3 (Random.Range (0.0f, plotScale.x - buildingScale.x), 0.0f, Random.Range (0.0f, plotScale.y - buildingScale.z));
+		Vector3 buildingOffset = new Vector3 (Random.Range (0.0f, plotScale.x - buildingScale.x), 0.0f, Random.Range (0.0f, plotScale.z - buildingScale.z));
 
 		if (stacking)
 			return BlockPlot (plotScale, buildingScale, buildingOffset);
@@ -83,90 +60,57 @@ public class Buildings : Build {
 
 	private GameObject HousePlot(Vector3 plotScale, Vector3 buildingScale, Vector3 buildingOffset)
 	{
-		GameObject plot = QuadMesh (plotScale, plotTexture, 0.05f * plotScale, "Road");
+		GameObject plot = QuadMesh (plotScale, plotTexture, new Vector2 (0.05f * plotScale.x, 0.05f * plotScale.z), "Road");
 
-		GameObject building = BoxMesh(buildingScale, buildingTextures[0], 0.3f, "Building");
-		building.transform.Translate (buildingOffset);
+		if (buildingScale.x < minBuildingScale.x || buildingScale.z < minBuildingScale.z) {
+			return plot;
+		}
+
+		GameObject building = BoxBuilding (buildingScale, buildingOffset, true);
 		building.transform.SetParent (plot.transform, false);
 
-		GameObject[] roof = RightAngleRoof (buildingScale);
-		for (int i = 0; i < roof.Length; i++) {
-			roof[i].transform.SetParent (building.transform, false);
+		remainingFeatures = new List<feature> ();
+		for (int i = 0; i < availableFeatures.Length; i++) {
+			remainingFeatures.Add (availableFeatures [i]);
 		}
 
-		// doors, need path (single door with uv?) / doorScale still here?
-		bool frontDoor = true;
-		Vector3 doorRotation = new Vector3 (-90.0f, 0.0f, 0.0f);
-		Vector3 doorOffset = new Vector3 ((int)Random.Range (0.0f, buildingScale.x-doorScale.x), 0.0f, -0.02f);
-		if (buildingOffset.z < plotScale.y - (buildingOffset.z + buildingScale.z)) {
-			doorOffset.x += doorScale.x;
-			doorOffset.z += buildingScale.z + 0.04f;
-			doorRotation.y += 180.0f;
-			frontDoor = false;
-		}
-		GameObject thisDoor = (GameObject)Instantiate (door, doorOffset, Quaternion.Euler (doorRotation));
-		thisDoor.SetActive (true);
-		//		GameObject thisDoor = QuadMesh (doorScale, doorTex, new Vector2(1.0f, 1.0f), "Building");
-		//		thisDoor.transform.Translate (doorOffset);
-		//		thisDoor.transform.Rotate (doorRotation);
-		thisDoor.transform.SetParent(building.transform, false);
-
-		// garages
-		if (buildingOffset.x > garageScale.x) {
-			Vector3 garageOffset = new Vector3(-garageScale.x, 0.0f, 0.0f);
-			if (frontDoor) {
-				garageOffset.z += buildingScale.z - garageScale.z;
-			}
-			GameObject thisGarage = Garage (garageOffset);
-			thisGarage.transform.SetParent (building.transform, false);
-		}
-		else if (plotScale.x - (buildingOffset.x + buildingScale.x) > garageScale.x) {
-			Vector3 garageOffset = new Vector3(buildingScale.x, 0.0f, 0.0f);
-			if (frontDoor) {
-				garageOffset.z += buildingScale.z - garageScale.z;
-			}
-			GameObject thisGarage = Garage (garageOffset);
-			thisGarage.transform.SetParent (building.transform, false);
-		}
-
-		// check if initialised?
-		GameObject[] windows = Windows (buildingScale);
-		for (int i = 0; i < windows.Length; i++) {
-			windows [i].transform.SetParent (building.transform, false);
-		}
+		AddFeatures (building, buildingScale, new Vector4 (buildingOffset.z, plotScale.z - (buildingOffset.z + buildingScale.z), buildingOffset.x, plotScale.x - (buildingOffset.x + buildingScale.x)));
 
 		return plot;
 	}
 
-	private GameObject Garage(Vector3 offset)
+	public GameObject BlockPlot(Vector3 plotScale, Vector3 buildingScale, Vector3 initOffset)
 	{
-		GameObject thisGarage = Instantiate (garage);
-		thisGarage.SetActive (true);
-		thisGarage.transform.Translate (offset);
+		GameObject plot = QuadMesh (plotScale, plotTexture, new Vector2 (0.05f * plotScale.x, 0.05f * plotScale.z), "Road");
 
-		GameObject[] roof = RightAngleRoof (garageScale);
-		for (int i = 0; i < roof.Length; i++) {
-			roof[i].transform.SetParent (thisGarage.transform, false);
+		if (buildingScale.x < minBuildingScale.x || buildingScale.z < minBuildingScale.z) {
+			return plot;
 		}
 
-		return thisGarage;
-	}
-
-	public GameObject BlockPlot(Vector3 plotScale, Vector3 buildingScale, Vector3 buildingOffset)
-	{
-		GameObject plot = QuadMesh (plotScale, plotTexture, 0.05f * plotScale, "Road");
+		Vector3 buildingOffset = initOffset;
 
 		while (buildingOffset.x + buildingScale.x <= plotScale.x) {
-			while (buildingOffset.z + buildingScale.z <= plotScale.y) {
+			while (buildingOffset.z + buildingScale.z <= plotScale.z) {
 				Vector3 thisScale = buildingScale;
 				Vector3 thisOffset = buildingOffset;
 				bool goneCircular = false;
+
+				remainingFeatures = new List<feature> ();
+				for (int i = 0; i < availableFeatures.Length; i++) {
+					remainingFeatures.Add (availableFeatures [i]);
+				}
 
 				while (thisOffset.y + thisScale.y <= maxBuildingScale.y) {
 
 					if (goneCircular || (thisScale.x == thisScale.z && thisScale.x >= 10.0f)) {
 						goneCircular = true;
-						GameObject building = ConeMesh (true, thisScale, buildingTextures[1], 1.0f, "Building");
+
+						Texture thisTexture = new Texture ();
+						if (buildingTextures.Length >= 2)
+							thisTexture = buildingTextures [1];
+						Debug.Log ("Circle");
+
+						GameObject building = ConeMesh (true, thisScale, thisTexture, 1.0f, "Building");
 						building.transform.Translate (0.5f * thisScale.x, 0, 0.5f * thisScale.z);
 						building.transform.Translate (thisOffset);
 						building.transform.SetParent (plot.transform, false);
@@ -176,22 +120,12 @@ public class Buildings : Build {
 						roof.transform.SetParent (building.transform, false);
 						roof.transform.Translate (0.0f, thisScale.y, 0.0f);
 
-						//break; or maths???
+						break;
 					} else {
-						GameObject building = BoxMesh (thisScale, buildingTextures[0], 0.3f, "Building");
-						building.transform.Translate (thisOffset);
+						GameObject building = BoxBuilding (thisScale, thisOffset, true);
 						building.transform.SetParent (plot.transform, false);
 
-						// check if initialised?
-						GameObject[] windows = Windows (thisScale);
-						for (int i = 0; i < windows.Length; i++) {
-							windows [i].transform.SetParent (building.transform, false);
-						}
-
-						GameObject[] roof = RightAngleRoof (thisScale);
-						for (int i = 0; i < roof.Length; i++) {
-							roof [i].transform.SetParent (building.transform, false);
-						}
+						AddFeatures (building, thisScale, new Vector4(0.1f, 0.1f, 0.1f, 0.1f));
 					}
 
 					thisOffset.y += thisScale.y;
@@ -204,132 +138,152 @@ public class Buildings : Build {
 					thisOffset.z += Random.Range (0, oldScale.z - thisScale.z);
 				}
 				buildingOffset.z += buildingScale.z;
+				buildingScale.z = (int)Random.Range (minBuildingScale.z, maxBuildingScale.z);
+				buildingScale.y = (int)Random.Range (minBuildingScale.y, maxBuildingScale.y);
 			}
+			buildingOffset.z = initOffset.z;
 			buildingOffset.x += buildingScale.x;
+			buildingScale.x = (int)Random.Range (minBuildingScale.x, maxBuildingScale.x);
 		}
 
 		return plot;
 	}
-		
-	public GameObject[] WindowColumn(float buildingHeight)
-	{
-		List<GameObject> windows = new List<GameObject> ();
-		Vector3 windowPosition = new Vector3(0, windowScale.y, 0);
 
-		while (windowPosition.y <= buildingHeight - 2.0f * windowScale.y) {
-			if (Random.Range (0, windowOdds) == 0) {
-				GameObject thisWindow = (GameObject)Instantiate (window, windowPosition, Quaternion.identity);
-				thisWindow.SetActive (true);
-//				GameObject thisWindow = QuadMesh(windowScale, windowTex, texScale, "Building");
-//				thisWindow.transform.Translate (windowPosition);
-				windows.Add(thisWindow);
-			}
-			windowPosition.y += windowSpacing.y;
+	public GameObject BoxBuilding(Vector3 scale, Vector3 offset, bool hasChimney)
+	{
+		Texture thisTexture = new Texture();
+		if (buildingTextures.Length != 0) {
+			thisTexture = buildingTextures [0];
 		}
 
-		return windows.ToArray ();
+		GameObject thisBuilding = BoxMesh (scale, thisTexture, 0.3f, "Building");
+		thisBuilding.transform.Translate (offset);
+
+		GameObject[] roof = RightAngleRoof (scale, hasChimney);
+		for (int i = 0; i < roof.Length; i++) {
+			roof[i].transform.SetParent (thisBuilding.transform, false);
+		}
+
+		return thisBuilding;
 	}
 
-	// give class more of the variables
-	private GameObject[] Windows(Vector3 buildingScale)
+	public GameObject Garage(Vector3 scale, Texture gateTexture)
 	{
-		List<GameObject> windows = new List<GameObject> ();
+		GameObject garage = BoxBuilding (scale, new Vector3 (0.0f, 0.0f, 0.0f), false);
+		GameObject gate = QuadMesh (new Vector3 (scale.z, scale.y-1.0f, 0.0f), gateTexture, new Vector2 (1.0f, 1.0f), "Building");
 
-		// south
-		Vector3 windowPosition = new Vector3 (windowScale.x, 0.0f, -0.01f);
-
-		while (windowPosition.x <= buildingScale.x-2.0f*windowScale.x)
-		{
-			GameObject[] column = WindowColumn (buildingScale.y);
-			for (int i = 0; i < column.Length; i++) {
-				column [i].transform.Translate (windowPosition);
-				column [i].transform.Rotate (new Vector3 (-90.0f, 0.0f, 0.0f));
-//				column [i].SetActive (true);
-				windows.Add (column [i]);
-			}
-			windowPosition.x += windowSpacing.x;
+		Vector3 gateOffset = new Vector3(-scale.z, 0.0f, -0.01f);
+		Vector3 gateRotation = new Vector3 (0.0f, 90.0f, 0.0f);
+		if (Random.Range (0, 2) == 0) {
+			gateOffset = new Vector3 (0.0f, 0.0f, -scale.x - 0.01f);
+			gateRotation.y = -gateRotation.y;
 		}
-
-		// north (double corner buffer for rotation, opposite corner buffer reduced)
-		windowPosition = new Vector3 (2.0f*windowScale.x, 0.0f, buildingScale.z + 0.01f);
-
-		while (windowPosition.x <= buildingScale.x-windowScale.x)
-		{
-			GameObject[] column = WindowColumn (buildingScale.y);
-			for (int i = 0; i < column.Length; i++) {
-				column [i].transform.Translate (windowPosition);
-				column [i].transform.Rotate (new Vector3 (-90.0f, 180.0f, 0.0f));
-//				column [i].SetActive (true);
-				windows.Add (column [i]);
-			}
-			windowPosition.x += windowSpacing.x;
-		}
-
-		// east (double corner buffer for rotation, opposite corner buffer reduced)
-		windowPosition = new Vector3 (-0.01f, 0.0f, 2.0f*windowScale.x);
-
-		while (windowPosition.z <= buildingScale.z-windowScale.x)
-		{
-			GameObject[] column = WindowColumn (buildingScale.y);
-			for (int i = 0; i < column.Length; i++) {
-				column [i].transform.Translate (windowPosition);
-				column [i].transform.Rotate (new Vector3 (-90.0f, 90.0f, 0.0f));
-//				column [i].SetActive (true);
-				windows.Add (column [i]);
-			}
-			windowPosition.z += windowSpacing.x;
-		}
-
-		// west
-		windowPosition = new Vector3 (buildingScale.x+0.01f, 0.0f, windowScale.x);
-
-		while (windowPosition.z <= buildingScale.z-2.0f*windowScale.x)
-		{
-			GameObject[] column = WindowColumn (buildingScale.y);
-			for (int i = 0; i < column.Length; i++) {
-				column [i].transform.Translate (windowPosition);
-				column [i].transform.Rotate (new Vector3 (-90.0f, -90.0f, 0.0f));
-//				column [i].SetActive (true);
-				windows.Add (column [i]);
-			}
-			windowPosition.z += windowSpacing.x;
-		}
-
-		return windows.ToArray();
-	}
 		
-	private GameObject[] RightAngleRoof(Vector3 houseScale)
+		gate.transform.Rotate (gateRotation);
+		gate.transform.Translate (gateOffset);
+		gate.transform.SetParent (garage.transform, false);
+
+		return garage;
+	}
+
+	private void AddFeatures(GameObject building, Vector3 thisScale, Vector4 plotSpaces)
+	{
+		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.x), 0.0f, new Vector3 (0.0f, 0.0f, -0.01f));
+
+		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.y), 180.0f, new Vector3 (-thisScale.x, 0.0f, -thisScale.z - 0.01f));
+
+		FeatureWall(building, new Vector3(thisScale.z, thisScale.y, plotSpaces.z), 90.0f, new Vector3(-thisScale.z, 0.0f, -0.01f));
+
+		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.w), -90.0f, new Vector3 (0.0f, 0.0f, -thisScale.x - 0.01f));
+	}
+
+	private void FeatureWall(GameObject building, Vector3 wallScale, float rotation, Vector3 translation)
+    {
+		Vector3 position = new Vector3 (0.0f, 0.0f, 0.0f);
+
+        Vector3 initialPosition = position;
+
+		while (position.y < wallScale.y)
+        {
+            while (position.x < wallScale.x)
+            {
+				// Select new feature
+				feature thisFeature;
+				do {
+					thisFeature = remainingFeatures.ToArray () [Random.Range (0, remainingFeatures.ToArray ().Length)];
+				} while ((thisFeature.grounded && position.y != initialPosition.y));// && (position.x + thisFeature.spacing.x + thisFeature.scale.x > wallScale.x || position.y + 2.0f*thisFeature.spacing.y + thisFeature.scale.y >= wallScale.y || thisFeature.scale.z > wallScale.z));
+
+				if (position.x + 2.0f*thisFeature.spacing.x + thisFeature.scale.x <= wallScale.x && 
+					position.y + 2.0f*thisFeature.spacing.y + thisFeature.scale.y <= wallScale.y && 
+					position.z + thisFeature.scale.z + thisFeature.spacing.z < wallScale.z) {
+					position.x += thisFeature.spacing.x;
+					Vector3 thisPosition = position;
+
+					thisPosition.y += thisFeature.spacing.y;
+					thisPosition.z -= thisFeature.scale.z;
+					thisPosition.z -= thisFeature.spacing.z;
+
+					if (Random.Range (0.0f, thisFeature.odds.y) <= thisFeature.odds.x) {
+						GameObject thisShape = (GameObject)Instantiate (thisFeature.shape, thisPosition, Quaternion.identity);
+						thisShape.transform.RotateAround (initialPosition, new Vector3 (0.0f, 1.0f, 0.0f), rotation);
+						thisShape.transform.Translate (translation);
+						thisShape.SetActive (true);
+						thisShape.transform.SetParent (building.transform, false);
+					}
+
+					if (thisFeature.single)
+						remainingFeatures.Remove (thisFeature);
+
+					position.x += thisFeature.scale.x;
+				}
+				position.x += thisFeature.spacing.x;
+            }
+
+            position.x = initialPosition.x;
+			position.y += floorHeight;
+        }
+    }
+		
+	private GameObject[] RightAngleRoof(Vector3 houseScale, bool hasChimney)
 	{
 
-		GameObject[] roofBlocks;
-		roofBlocks = new GameObject[5];
+		List<GameObject> roofBlocks = new List<GameObject> ();
 
 		float roofHeight = (int)Random.Range (0.0f, 0.5f * houseScale.y);
 		float angle = Mathf.Atan2 (roofHeight, 0.5f*houseScale.z);
 
-		Vector2 roofScale = new Vector2 (houseScale.x, 0.5f * houseScale.z / Mathf.Cos (angle));
+		Vector3 roofScale = new Vector3 (houseScale.x, 0.0f, 0.5f * houseScale.z / Mathf.Cos (angle));
 
 		if (Random.Range (0, 2) == 0) {
 
 			Vector3 slopeRotation = new Vector3(-(angle * Mathf.Rad2Deg), 0.0f, 0.0f);
-			roofBlocks [0] = QuadMesh (roofScale, roofTexture, roofScale, "Building");//SetupPrimitive (PrimitiveType.Quad, rotationDegrees, roofScale, roofPosition1, roofTexture, texScale, "Building");
-			roofBlocks [0].transform.Translate (0.0f, houseScale.y, 0.0f);
-			roofBlocks [0].transform.Rotate (slopeRotation);
+			GameObject roofBlock = QuadMesh (roofScale, roofTexture, new Vector2(roofScale.x, roofScale.z), "Building");//SetupPrimitive (PrimitiveType.Quad, rotationDegrees, roofScale, roofPosition1, roofTexture, texScale, "Building");
+			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlock.transform.Rotate (slopeRotation);
+			roofBlocks.Add (roofBlock);
 
 			slopeRotation.y += 180.0f;
-			roofBlocks [1] = QuadMesh (roofScale, roofTexture, roofScale, "Building");//SetupPrimitive (PrimitiveType.Quad, rotationDegrees, roofScale, roofPosition2, roofTexture, texScale, "Building");
-			roofBlocks [1].transform.Translate (houseScale.x, houseScale.y, houseScale.z);
-			roofBlocks [1].transform.Rotate (slopeRotation);
+			roofBlock = QuadMesh (roofScale, roofTexture, new Vector2(roofScale.x, roofScale.z), "Building");//SetupPrimitive (PrimitiveType.Quad, rotationDegrees, roofScale, roofPosition2, roofTexture, texScale, "Building");
+			roofBlock.transform.Translate (houseScale.x, houseScale.y, houseScale.z);
+			roofBlock.transform.Rotate (slopeRotation);
+			roofBlocks.Add (roofBlock);
 
 			Vector3[] vertPos = new Vector3[] {
 				new Vector3 (0.0f, 0.0f, 0.0f),
 				new Vector3 (0.0f, roofHeight, 0.5f*houseScale.z),
 				new Vector3 (0.0f, 0.0f, houseScale.z)};
-			roofBlocks [2] = TriangleMesh (vertPos, true, buildingTextures[0], new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight));
-			roofBlocks [2].transform.Translate (0.0f, houseScale.y, 0.0f);
 
-			roofBlocks [3] = TriangleMesh (vertPos, false, buildingTextures[0], new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight));
-			roofBlocks [3].transform.Translate (houseScale.x, houseScale.y, 0.0f);
+			Texture thisTexture = new Texture ();
+			if (buildingTextures.Length != 0)
+				thisTexture = buildingTextures [0];
+			
+			roofBlock = TriangleMesh (vertPos, true, thisTexture, new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight));
+			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlocks.Add (roofBlock);
+
+			roofBlock = TriangleMesh (vertPos, false, thisTexture, new Vector2 (0.3f * houseScale.z, 0.3f * roofHeight));
+			roofBlock.transform.Translate (houseScale.x, houseScale.y, 0.0f);
+			roofBlocks.Add (roofBlock);
 		}
 
 		else {
@@ -339,36 +293,43 @@ public class Buildings : Build {
 			Vector3 cornerNE = new Vector3 (houseScale.x, 0.0f, houseScale.z);
 			Vector3 top = new Vector3 (0.5f * houseScale.x, roofHeight, 0.5f * houseScale.z);
 
-			Vector2 texScaleWide = new Vector2 (houseScale.x, roofScale.y);
+			Vector2 texScaleWide = new Vector2 (houseScale.x, houseScale.z);
 			Vector2 texScaleLong = new Vector2 (houseScale.z, Mathf.Sqrt (Mathf.Pow (roofHeight, 2) + Mathf.Pow (houseScale.x * 0.5f, 2)));
 
 			Vector3[] vertPos = new Vector3[] { cornerSW, top, cornerSE };
-			roofBlocks [0] = TriangleMesh (vertPos, false, roofTexture, texScaleWide);
-			roofBlocks [0].transform.Translate (0.0f, houseScale.y, 0.0f);
+			GameObject roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleWide);
+			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlocks.Add (roofBlock);
 
 			vertPos = new Vector3[] { cornerSE, top, cornerNE };
-			roofBlocks [1] = TriangleMesh (vertPos, false, roofTexture, texScaleLong);
-			roofBlocks [1].transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleLong);
+			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlocks.Add (roofBlock);
 
 			vertPos = new Vector3[] { cornerNE, top, cornerNW };
-			roofBlocks [2] = TriangleMesh (vertPos, false, roofTexture, texScaleWide);
-			roofBlocks [2].transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleWide);
+			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlocks.Add (roofBlock);
 
 			vertPos = new Vector3[] { cornerNW, top, cornerSW };
-			roofBlocks [3] = TriangleMesh (vertPos, false, roofTexture, texScaleLong);
-			roofBlocks [3].transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlock = TriangleMesh (vertPos, false, roofTexture, texScaleLong);
+			roofBlock.transform.Translate (0.0f, houseScale.y, 0.0f);
+			roofBlocks.Add (roofBlock);
 		}
 
-		Vector3 chimneyScale = new Vector3 (1.0f, roofHeight, 1.0f);
-		if (roofHeight < 1.0f)
-			chimneyScale.y = 1.0f;
-		Vector2 chimneyTexScale = new Vector2 (1.0f, chimneyScale.y);
-		Vector3 chimneyPos = new Vector3 (0.01f + Random.Range (0.5f * chimneyScale.x, houseScale.x - 0.5f * chimneyScale.x),
-			                     houseScale.y + 0.5f * chimneyScale.y,
-			                     0.01f + Random.Range (0.5f * chimneyScale.z, houseScale.z - 0.5f * chimneyScale.z));
-		roofBlocks [4] = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), chimneyScale, chimneyPos, roofTexture, chimneyTexScale, "Building");
+		if (hasChimney) {
+			Vector3 chimneyScale = new Vector3 (1.0f, roofHeight, 1.0f);
+			if (roofHeight < 1.0f)
+				chimneyScale.y = 1.0f;
+			Vector2 chimneyTexScale = new Vector2 (1.0f, chimneyScale.y);
+			Vector3 chimneyPos = new Vector3 (0.01f + Random.Range (0.5f * chimneyScale.x, houseScale.x - 0.5f * chimneyScale.x),
+				houseScale.y + 0.5f * chimneyScale.y,
+				0.01f + Random.Range (0.5f * chimneyScale.z, houseScale.z - 0.5f * chimneyScale.z));
+			GameObject roofBlock = SetupPrimitive (PrimitiveType.Cube, new Vector3 (0.0f, 0.0f, 0.0f), chimneyScale, chimneyPos, roofTexture, chimneyTexScale, "Building");
+			roofBlocks.Add (roofBlock);
+		}
 
-		return roofBlocks;
+		return roofBlocks.ToArray ();
 	}
 
 	// Use this for initialization

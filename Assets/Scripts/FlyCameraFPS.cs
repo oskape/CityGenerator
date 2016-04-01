@@ -32,8 +32,8 @@ public class FlyCameraFPS : MonoBehaviour {
 
 	float rotationY = 0F;
 
-	public float moveSpeed = 0.1f;
-	public float boost = 5.0f;
+	private float moveSpeed = 0.5f;
+	private float boost = 5.0f;
 
 	private Build builder;
 
@@ -44,6 +44,15 @@ public class FlyCameraFPS : MonoBehaviour {
 
 	void Update ()
 	{
+		// Beginnings of window culling
+//		GameObject[] windows = GameObject.FindGameObjectsWithTag ("Window");
+//
+//		for (int i = 0; i < windows.Length; i++) {
+//			if (windows [i].transform.rotation.eulerAngles.y >= 180.0f) {
+//				windows [i].SetActive (false);
+//			}
+//		}
+
 		if (Input.GetKeyDown (KeyCode.R)) {
 			builder.CleanWorld ();
 			builder.Init ();
