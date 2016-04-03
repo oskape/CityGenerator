@@ -68,11 +68,6 @@ public class Buildings : Build {
 		GameObject building = BoxBuilding (buildingScale, buildingOffset, true);
 		building.transform.SetParent (plot.transform, false);
 
-		remainingFeatures = new List<feature> ();
-		for (int i = 0; i < availableFeatures.Length; i++) {
-			remainingFeatures.Add (availableFeatures [i]);
-		}
-
 		AddFeatures (building, buildingScale, new Vector4 (buildingOffset.z, plotScale.z - (buildingOffset.z + buildingScale.z), buildingOffset.x, plotScale.x - (buildingOffset.x + buildingScale.x)));
 
 		return plot;
