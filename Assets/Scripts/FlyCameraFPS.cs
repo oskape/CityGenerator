@@ -53,6 +53,10 @@ public class FlyCameraFPS : MonoBehaviour {
 //			}
 //		}
 
+		if (Input.GetKeyDown (KeyCode.Escape)) {
+			Application.Quit ();
+		}
+
 		if (Input.GetKeyDown (KeyCode.R)) {
 			builder.CleanWorld ();
 			builder.Init ();
