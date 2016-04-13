@@ -13,6 +13,11 @@ public class Buildings : Build {
 	private Texture[] buildingTextures;
 	private Texture roofTexture;
 
+	public int windowCount;
+
+	bool doorAdded;
+	feature door;
+
 	private bool stacking;
 
 	feature[] availableFeatures;
@@ -45,8 +50,8 @@ public class Buildings : Build {
 	public GameObject SetupPlot(Vector3 plotScale)
 	{
 		Vector3 buildingScale = new Vector3 ((int)Random.Range (minBuildingScale.x, maxBuildingScale.x), (int)Random.Range (minBuildingScale.y, maxBuildingScale.y), (int)Random.Range (minBuildingScale.z, maxBuildingScale.z));
-		buildingScale.x = Mathf.Clamp (buildingScale.x, 0, plotScale.x);
-		buildingScale.z = Mathf.Clamp (buildingScale.z, 0, plotScale.z);
+		buildingScale.x = (int)Mathf.Clamp (buildingScale.x, 0, plotScale.x);
+		buildingScale.z = (int)Mathf.Clamp (buildingScale.z, 0, plotScale.z);
 
 		Vector3 buildingOffset = new Vector3 (Random.Range (0.0f, plotScale.x - buildingScale.x), 0.0f, Random.Range (0.0f, plotScale.z - buildingScale.z));
 
@@ -97,7 +102,6 @@ public class Buildings : Build {
 						Texture thisTexture = new Texture ();
 						if (buildingTextures.Length >= 2)
 							thisTexture = buildingTextures [1];
-						Debug.Log ("Circle");
 
 						GameObject building = ConeMesh (true, thisScale, thisTexture, 1.0f, "Building");
 						building.transform.Translate (0.5f * thisScale.x, 0, 0.5f * thisScale.z);
@@ -177,8 +181,7 @@ public class Buildings : Build {
 
 	private void AddFeatures(GameObject building, Vector3 thisScale, Vector4 plotSpaces)
 	{
-		bool doorAdded = false;
-		feature door = new feature();
+		doorAdded = false;
 
 		remainingFeatures = new List<feature> ();
 		for (int i = 0; i < availableFeatures.Length; i++) {
@@ -189,32 +192,16 @@ public class Buildings : Build {
 			}
 		}
 
-		if (Random.Range (0, 4) == 0 && !doorAdded) {
-			remainingFeatures.Add (door);
-			doorAdded = true;
-		}
-		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.x), 0.0f, new Vector3 (0.0f, 0.0f, -0.01f));
+		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.x), 0.0f, new Vector3 (0.0f, 0.0f, -0.01f), new Vector2(0.0f, 2.0f*thisScale.x+2.0f*thisScale.z));
 
-		if (Random.Range (0, 3) == 0 && !doorAdded) {
-			remainingFeatures.Add (door);
-			doorAdded = true;
-		}
-		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.y), 180.0f, new Vector3 (-thisScale.x, 0.0f, -thisScale.z - 0.01f));
+		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.y), 180.0f, new Vector3 (-thisScale.x, 0.0f, -thisScale.z - 0.01f), new Vector2(thisScale.x, 2.0f*thisScale.x+2.0f*thisScale.z));
 
-		if (Random.Range (0, 2) == 0 && !doorAdded) {
-			remainingFeatures.Add (door);
-			doorAdded = true;
-		}
-		FeatureWall(building, new Vector3(thisScale.z, thisScale.y, plotSpaces.z), 90.0f, new Vector3(-thisScale.z, 0.0f, -0.01f));
+		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.z), 90.0f, new Vector3 (-thisScale.z, 0.0f, -0.01f), new Vector2 (2.0f * thisScale.x, 2.0f * thisScale.x + 2.0f * thisScale.z));
 
-		if (Random.Range (0, 1) == 0 && !doorAdded) {
-			remainingFeatures.Add (door);
-			doorAdded = true;
-		}
-		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.w), -90.0f, new Vector3 (0.0f, 0.0f, -thisScale.x - 0.01f));
+		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.w), -90.0f, new Vector3 (0.0f, 0.0f, -thisScale.x - 0.01f), new Vector2(2.0f*thisScale.x + thisScale.z, 2.0f*thisScale.x+2.0f*thisScale.z));
 	}
 
-	private void FeatureWall(GameObject building, Vector3 wallScale, float rotation, Vector3 translation)
+	private void FeatureWall(GameObject building, Vector3 wallScale, float rotation, Vector3 translation, Vector2 doorOdds)
     {
 		Vector3 position = new Vector3 (0.0f, 0.0f, 0.0f);
 
@@ -226,9 +213,14 @@ public class Buildings : Build {
             {
 				// Select new feature
 				feature thisFeature;
-				do {
-					thisFeature = remainingFeatures.ToArray () [Random.Range (0, remainingFeatures.ToArray ().Length)];
-				} while (thisFeature.grounded && position.y + building.transform.position.y > 0.0f);
+
+				if ((Random.Range (0.0f, doorOdds.y - 2.0f*door.spacing.x - door.scale.x) <= doorOdds.x + position.x) && !doorAdded && position.y + building.transform.position.y == 0.0f) {
+					thisFeature = door;
+				} else {
+					do {
+						thisFeature = remainingFeatures.ToArray () [Random.Range (0, remainingFeatures.ToArray ().Length)];
+					} while (thisFeature.grounded && position.y + building.transform.position.y > 0.0f);
+				}
 
 				if (position.x + 2.0f*thisFeature.spacing.x + thisFeature.scale.x <= wallScale.x && 
 					position.y + 2.0f*thisFeature.spacing.y + thisFeature.scale.y <= wallScale.y && 
@@ -247,16 +239,19 @@ public class Buildings : Build {
 						thisShape.transform.Translate (translation);
 						thisShape.SetActive (true);
 						thisShape.transform.SetParent (building.transform, false);
+
+						if (thisFeature.name == "Window") {
+							windowCount++;
+						} else if (thisFeature.name == "Door") {
+							doorAdded = true;
+						} else if (thisFeature.single) {
+							remainingFeatures.Remove (thisFeature);
+						}
 					}
-
-					if (thisFeature.single)
-						remainingFeatures.Remove (thisFeature);
-
 					position.x += thisFeature.scale.x;
 				}
 				position.x += thisFeature.spacing.x;
             }
-
             position.x = initialPosition.x;
 			position.y += floorHeight;
         }
@@ -264,7 +259,6 @@ public class Buildings : Build {
 		
 	private GameObject[] RightAngleRoof(Vector3 houseScale, bool hasChimney)
 	{
-
 		List<GameObject> roofBlocks = new List<GameObject> ();
 
 		float roofHeight = (int)Random.Range (0.0f, 0.5f * houseScale.y);

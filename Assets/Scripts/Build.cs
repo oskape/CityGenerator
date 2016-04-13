@@ -84,13 +84,13 @@ public class Build : MonoBehaviour {
 	[SerializeField]private Vector3 garageSpacing = new Vector3 (0.0f, 0.0f, 2.0f);
 	[SerializeField]private Vector2 garageOdds = new Vector2 (1.0f, 1.0f);
 
-	[SerializeField]private Vector2 windowScale = new Vector2 (1.0f, 1.0f);
-	[SerializeField]private Vector2 windowSpacing = new Vector2 (1.0f, 1.0f);
+	[SerializeField]private Vector3 windowScale = new Vector3 (1.0f, 1.0f, 0.0f);
+	[SerializeField]private Vector3 windowSpacing = new Vector3 (1.0f, 1.0f, 0.0f);
 	[SerializeField]private Vector2 houseWindowOdds = new Vector2 (3.0f, 4.0f);
 	[SerializeField]private Vector2 blockWindowOdds = new Vector2 (5.0f, 6.0f);
 
-	[SerializeField]private Vector2 doorScale = new Vector2 (2.0f, 3.0f);
-	[SerializeField]private Vector2 doorSpacing = new Vector2 (0.5f, 0.0f);
+	[SerializeField]private Vector3 doorScale = new Vector3 (2.0f, 3.0f, 0.0f);
+	[SerializeField]private Vector3 doorSpacing = new Vector3 (0.5f, 0.0f, 0.0f);
 	[SerializeField]private Vector2 doorOdds = new Vector2 (1.0f, 1.0f);
 
 	[SerializeField]private float streetWidth = 5.0f;
@@ -108,6 +108,8 @@ public class Build : MonoBehaviour {
 	// not used
 	private int numRows = 15;
 	private int numColumns = 10;
+
+	private int plotCount;
 
 	public struct feature
 	{
@@ -189,8 +191,16 @@ public class Build : MonoBehaviour {
 
 	public void Init()
 	{
+		houses.windowCount = 0;
+		blocks.windowCount = 0;
+		plotCount = 0;
+
 		GeneratePlots ();
 //		ColumnsShareWidth ();
+
+		Debug.Log ("House windows: " + houses.windowCount);
+		Debug.Log ("Block windows: " + blocks.windowCount);
+		Debug.Log ("Plots: " + plotCount);
 	}
 
 	private void GeneratePlots()
@@ -272,6 +282,8 @@ public class Build : MonoBehaviour {
 		for (int a = 0; a < roadSection.Length; a++) {
 			roadSection [a].transform.SetParent (plot.transform, false);
 		}
+
+		plotCount++;
 	}
 
 	// old
