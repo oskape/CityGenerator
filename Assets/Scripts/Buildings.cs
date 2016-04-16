@@ -220,7 +220,7 @@ public class Buildings : Build {
 				// Select new feature
 				feature thisFeature;
 
-				if (((Random.Range (0.0f, doorOdds.y) < door.scale.x+2.0f*door.spacing.x) || doorOdds.y-doorOdds.x-position.x <= door.scale.x+2.0f*door.spacing.x) && !doorAdded && position.y + building.transform.position.y == 0.0f) {
+				if (((Random.Range (0.0f, doorOdds.y) < door.scale.x+2.0f*door.spacing.x) || doorOdds.y-doorOdds.x-position.x <= 2.0f*(door.scale.x+2.0f*door.spacing.x)) && !doorAdded && position.y + building.transform.position.y == 0.0f) {
 					thisFeature = door;
 				} else {
 					do {
