@@ -8,6 +8,7 @@ public class Buildings : Build {
 	private Vector3 maxBuildingScale;
 
 	private float floorHeight;
+	private float plotBuffer;
 
 	private Texture plotTexture;
 	private Texture[] buildingTextures;
@@ -23,7 +24,7 @@ public class Buildings : Build {
 	feature[] availableFeatures;
 	List<feature> remainingFeatures;
 
-	public void InitBuildings(bool aStacking, Texture aPlotTexture, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, float aFloorHeight, Texture[] aBuildingTextures, Texture aRoofTexture)
+	public void InitBuildings(bool aStacking, Texture aPlotTexture, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, float aFloorHeight, float aPlotBuffer, Texture[] aBuildingTextures, Texture aRoofTexture)
 	{
 		stacking = aStacking;
 
@@ -33,6 +34,7 @@ public class Buildings : Build {
 		maxBuildingScale = aMaxBuildingScale;
 
 		floorHeight = aFloorHeight;
+		plotBuffer = aPlotBuffer;
 
 		buildingTextures = new Texture[aBuildingTextures.Length];
 		for (int i = 0; i < aBuildingTextures.Length; i++) {
@@ -50,10 +52,10 @@ public class Buildings : Build {
 	public GameObject SetupPlot(Vector3 plotScale)
 	{
 		Vector3 buildingScale = new Vector3 ((int)Random.Range (minBuildingScale.x, maxBuildingScale.x), (int)Random.Range (minBuildingScale.y, maxBuildingScale.y), (int)Random.Range (minBuildingScale.z, maxBuildingScale.z));
-		buildingScale.x = (int)Mathf.Clamp (buildingScale.x, 0, plotScale.x);
-		buildingScale.z = (int)Mathf.Clamp (buildingScale.z, 0, plotScale.z);
+		buildingScale.x = (int)Mathf.Clamp (buildingScale.x, 0, plotScale.x - 2.0f * plotBuffer);
+		buildingScale.z = (int)Mathf.Clamp (buildingScale.z, 0, plotScale.z - 2.0f * plotBuffer);
 
-		Vector3 buildingOffset = new Vector3 (Random.Range (0.0f, plotScale.x - buildingScale.x), 0.0f, Random.Range (0.0f, plotScale.z - buildingScale.z));
+		Vector3 buildingOffset = new Vector3 (Random.Range (plotBuffer, plotScale.x - buildingScale.x - plotBuffer), 0.0f, Random.Range (plotBuffer, plotScale.z - buildingScale.z - plotBuffer));
 
 		if (stacking)
 			return BlockPlot (plotScale, buildingScale, buildingOffset);
@@ -88,8 +90,8 @@ public class Buildings : Build {
 
 		Vector3 buildingOffset = initOffset;
 
-		while (buildingOffset.x + buildingScale.x <= plotScale.x) {
-			while (buildingOffset.z + buildingScale.z <= plotScale.z) {
+		while (buildingOffset.x + buildingScale.x <= plotScale.x - plotBuffer) {
+			while (buildingOffset.z + buildingScale.z <= plotScale.z - plotBuffer) {
 				Vector3 thisScale = buildingScale;
 				Vector3 thisOffset = buildingOffset;
 				bool goneCircular = false;
@@ -103,7 +105,7 @@ public class Buildings : Build {
 						if (buildingTextures.Length >= 2)
 							thisTexture = buildingTextures [1];
 
-						GameObject building = ConeMesh (true, thisScale, thisTexture, 1.0f, "Building");
+						GameObject building = ConeMesh (true, thisScale, thisTexture, 0.05f, "Building");
 						building.transform.Translate (0.5f * thisScale.x, 0, 0.5f * thisScale.z);
 						building.transform.Translate (thisOffset);
 						building.transform.SetParent (plot.transform, false);
@@ -192,13 +194,17 @@ public class Buildings : Build {
 			}
 		}
 
+		// South
 		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.x), 0.0f, new Vector3 (0.0f, 0.0f, -0.01f), new Vector2(0.0f, 2.0f*thisScale.x+2.0f*thisScale.z));
 
-		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.y), 180.0f, new Vector3 (-thisScale.x, 0.0f, -thisScale.z - 0.01f), new Vector2(thisScale.x, 2.0f*thisScale.x+2.0f*thisScale.z));
+		// West
+		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.z), 90.0f, new Vector3 (-thisScale.z, 0.0f, -0.01f), new Vector2 (thisScale.x, 2.0f*thisScale.x+2.0f*thisScale.z));
 
-		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.z), 90.0f, new Vector3 (-thisScale.z, 0.0f, -0.01f), new Vector2 (2.0f * thisScale.x, 2.0f * thisScale.x + 2.0f * thisScale.z));
+		// North
+		FeatureWall (building, new Vector3 (thisScale.x, thisScale.y, plotSpaces.y), 180.0f, new Vector3 (-thisScale.x, 0.0f, -thisScale.z - 0.01f), new Vector2(thisScale.x+thisScale.z, 2.0f*thisScale.x+2.0f*thisScale.z));;
 
-		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.w), -90.0f, new Vector3 (0.0f, 0.0f, -thisScale.x - 0.01f), new Vector2(2.0f*thisScale.x + thisScale.z, 2.0f*thisScale.x+2.0f*thisScale.z));
+		// East
+		FeatureWall (building, new Vector3 (thisScale.z, thisScale.y, plotSpaces.w), -90.0f, new Vector3 (0.0f, 0.0f, -thisScale.x - 0.01f), new Vector2(2.0f*thisScale.x+thisScale.z, 2.0f*thisScale.x+2.0f*thisScale.z));
 	}
 
 	private void FeatureWall(GameObject building, Vector3 wallScale, float rotation, Vector3 translation, Vector2 doorOdds)
@@ -214,7 +220,7 @@ public class Buildings : Build {
 				// Select new feature
 				feature thisFeature;
 
-				if ((Random.Range (0.0f, doorOdds.y - 2.0f*door.spacing.x - door.scale.x) <= doorOdds.x + position.x) && !doorAdded && position.y + building.transform.position.y == 0.0f) {
+				if (((Random.Range (0.0f, doorOdds.y) < door.scale.x+2.0f*door.spacing.x) || doorOdds.y-doorOdds.x-position.x <= door.scale.x+2.0f*door.spacing.x) && !doorAdded && position.y + building.transform.position.y == 0.0f) {
 					thisFeature = door;
 				} else {
 					do {

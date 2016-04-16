@@ -46,6 +46,7 @@ public class Build : MonoBehaviour {
 	//http://texturelib.com/texture/?path=/Textures/wood/planks%20new/wood_planks_new_0042
 	//http://texturelib.com/texture/?path=/Textures/windows/windows_0197
 	//http://texturelib.com/texture/?path=/Textures/windows/windows_0192
+	//https://www.textures.com/download/highriseglass0002/17110
 	//Garage gate: https://www.filterforge.com/filters/3042.jpg
 	[SerializeField]private Texture garageTexture;
 	[SerializeField]private Texture roadTexture;
@@ -71,7 +72,7 @@ public class Build : MonoBehaviour {
 //	[SerializeField]private Vector2 minYardScale = new Vector2 (10.0f, 10.0f);
 //	[SerializeField]private Vector2 maxYardScale = new Vector2 (15.0f, 15.0f);
 
-	[SerializeField]private Vector2 minPlotScale = new Vector2 (10.0f, 10.0f);
+	[SerializeField]private Vector2 minPlotScale = new Vector2 (16.0f, 16.0f);
 	[SerializeField]private Vector2 maxPlotScale = new Vector2 (50.0f, 50.0f);
 
 	[SerializeField]private Vector3 minHouseScale = new Vector3 (10.0f, 5.0f, 10.0f);
@@ -95,6 +96,7 @@ public class Build : MonoBehaviour {
 
 	[SerializeField]private float streetWidth = 5.0f;
 	[SerializeField]private float floorHeight = 3.0f;
+	[SerializeField]private float plotBuffer = 3.0f;
 	//[SerializeField]private float mainRoadWidth = 10.0f;
 
 	private Buildings houses;
@@ -167,9 +169,9 @@ public class Build : MonoBehaviour {
 		blocks = gameObject.AddComponent<Buildings> ();
 		roads = gameObject.AddComponent<Roads> ();
 
-		houses.InitBuildings (false, grassTexture, minHouseScale, maxHouseScale, floorHeight, houseTexture, houseRoofTexture);
+		houses.InitBuildings (false, grassTexture, minHouseScale, maxHouseScale, floorHeight, plotBuffer, houseTexture, houseRoofTexture);
 
-		blocks.InitBuildings (true, pavementTexture, minBlockScale, maxBlockScale, floorHeight, blockTexture, blockRoofTexture);
+		blocks.InitBuildings (true, pavementTexture, minBlockScale, maxBlockScale, floorHeight, plotBuffer, blockTexture, blockRoofTexture);
 
 		InitAllFeatures ();
 
@@ -510,17 +512,18 @@ public class Build : MonoBehaviour {
 		}
 
 		// Sides
+		Vector2 texScale = new Vector2(3.0f*scale.x * textureScale, scale.y*textureScale);
 		int u_sides = 0;
 		while (u <= uvs.Length - 4 )
 		{
 			float t = (float)u_sides / nbSides;
-			uvs[u] = new Vector3(t, 1f);
-			uvs[u + 1] = new Vector3(t, 0f);
+			uvs[u] = new Vector3(texScale.x*t, texScale.y);
+			uvs[u + 1] = new Vector3(texScale.x*t, 0f);
 			u += 2;
 			u_sides++;
 		}
-		uvs[u] = textureScale*new Vector2(1.0f, 1.0f);
-		uvs[u + 1] = textureScale*new Vector2(1f, 0f);
+		uvs[u] = new Vector2(texScale.x, texScale.y);
+		uvs[u + 1] = new Vector2(texScale.x, 0f);
 		#endregion 
 
 		#region Triangles
@@ -585,6 +588,9 @@ public class Build : MonoBehaviour {
 		mesh.triangles = triangles;
 
 		cone.AddComponent<MeshRenderer> ().material.mainTexture = texture;
+//		if (isCylinder) {
+//            cone.GetComponent<MeshRenderer>().material.shader = Shader.Find("Reflective/Diffuse");
+//		}
 
 		mesh.RecalculateBounds();
 		mesh.Optimize();
