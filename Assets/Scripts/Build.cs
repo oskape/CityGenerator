@@ -69,6 +69,8 @@ public class Build : MonoBehaviour {
 
 	[SerializeField]private Vector2 mapScale = new Vector2 (400.0f, 400.0f);
 
+	[SerializeField]private bool featuresEnabled = true;
+
 //	[SerializeField]private Vector2 minYardScale = new Vector2 (10.0f, 10.0f);
 //	[SerializeField]private Vector2 maxYardScale = new Vector2 (15.0f, 15.0f);
 
@@ -169,15 +171,17 @@ public class Build : MonoBehaviour {
 		blocks = gameObject.AddComponent<Buildings> ();
 		roads = gameObject.AddComponent<Roads> ();
 
-		houses.InitBuildings (false, grassTexture, minHouseScale, maxHouseScale, floorHeight, plotBuffer, houseTexture, houseRoofTexture);
+		houses.InitBuildings (false, featuresEnabled, grassTexture, minHouseScale, maxHouseScale, floorHeight, plotBuffer, houseTexture, houseRoofTexture);
 
-		blocks.InitBuildings (true, pavementTexture, minBlockScale, maxBlockScale, floorHeight, plotBuffer, blockTexture, blockRoofTexture);
+		blocks.InitBuildings (true, featuresEnabled, pavementTexture, minBlockScale, maxBlockScale, floorHeight, plotBuffer, blockTexture, blockRoofTexture);
 
 		InitAllFeatures ();
 
 		roads.InitRoads (streetWidth, roadTexture, intersectionTexture);
 
 		Init ();
+
+		GetComponent<FPSDisplay> ().SetScale (mapScale.x, mapScale.y);
 	}
 
 	public void CleanWorld()

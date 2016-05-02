@@ -23,10 +23,12 @@ public class Buildings : Build {
 
 	feature[] availableFeatures;
 	List<feature> remainingFeatures;
+	bool featuresEnabled;
 
-	public void InitBuildings(bool aStacking, Texture aPlotTexture, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, float aFloorHeight, float aPlotBuffer, Texture[] aBuildingTextures, Texture aRoofTexture)
+	public void InitBuildings(bool aStacking, bool aFeaturesEnabled, Texture aPlotTexture, Vector3 aMinBuildingScale, Vector3 aMaxBuildingScale, float aFloorHeight, float aPlotBuffer, Texture[] aBuildingTextures, Texture aRoofTexture)
 	{
 		stacking = aStacking;
+		featuresEnabled = aFeaturesEnabled;
 
 		plotTexture = aPlotTexture;
 
@@ -75,7 +77,9 @@ public class Buildings : Build {
 		GameObject building = BoxBuilding (buildingScale, buildingOffset, true);
 		building.transform.SetParent (plot.transform, false);
 
-		AddFeatures (building, buildingScale, new Vector4 (buildingOffset.z, plotScale.z - (buildingOffset.z + buildingScale.z), buildingOffset.x, plotScale.x - (buildingOffset.x + buildingScale.x)));
+		if (featuresEnabled) {
+			AddFeatures (building, buildingScale, new Vector4 (buildingOffset.z, plotScale.z - (buildingOffset.z + buildingScale.z), buildingOffset.x, plotScale.x - (buildingOffset.x + buildingScale.x)));
+		}
 
 		return plot;
 	}
@@ -120,7 +124,9 @@ public class Buildings : Build {
 						GameObject building = BoxBuilding (thisScale, thisOffset, true);
 						building.transform.SetParent (plot.transform, false);
 
-						AddFeatures (building, thisScale, new Vector4(0.1f, 0.1f, 0.1f, 0.1f));
+						if (featuresEnabled) {
+							AddFeatures (building, thisScale, new Vector4(0.1f, 0.1f, 0.1f, 0.1f));
+						}
 					}
 
 					thisOffset.y += thisScale.y;
