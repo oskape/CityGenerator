@@ -105,7 +105,7 @@ public class Buildings : Build {
 					if (goneCircular || (thisScale.x == thisScale.z && thisScale.x >= 10.0f)) {
 						goneCircular = true;
 
-						Texture thisTexture = new Texture ();
+                        Texture thisTexture = new Texture2D((int)thisScale.x, (int)thisScale.y);
 						if (buildingTextures.Length >= 2)
 							thisTexture = buildingTextures [1];
 
@@ -152,7 +152,7 @@ public class Buildings : Build {
 
 	public GameObject BoxBuilding(Vector3 scale, Vector3 offset, bool hasChimney)
 	{
-		Texture thisTexture = new Texture();
+		Texture thisTexture = new Texture2D((int)scale.x, (int)scale.y);
 		if (buildingTextures.Length != 0) {
 			thisTexture = buildingTextures [0];
 		}
@@ -297,7 +297,7 @@ public class Buildings : Build {
 				new Vector3 (0.0f, roofHeight, 0.5f*houseScale.z),
 				new Vector3 (0.0f, 0.0f, houseScale.z)};
 
-			Texture thisTexture = new Texture ();
+			Texture thisTexture = new Texture2D((int)houseScale.x, (int)houseScale.y);
 			if (buildingTextures.Length != 0)
 				thisTexture = buildingTextures [0];
 			

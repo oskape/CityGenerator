@@ -394,8 +394,7 @@ public class Build : MonoBehaviour {
 		quad.AddComponent<MeshRenderer> ().material.mainTexture = texture;
 
 		mesh.RecalculateNormals(); 
-		mesh.RecalculateBounds (); 
-		mesh.Optimize();
+		mesh.RecalculateBounds ();
 
 		return quad;
 	}
@@ -597,7 +596,6 @@ public class Build : MonoBehaviour {
 //		}
 
 		mesh.RecalculateBounds();
-		mesh.Optimize();
 
 		return cone;
 	}
@@ -694,8 +692,7 @@ public class Build : MonoBehaviour {
 		box.AddComponent<MeshRenderer> ().material.mainTexture = texture;
 
 		mesh.RecalculateNormals(); 
-		mesh.RecalculateBounds (); 
-		mesh.Optimize();
+		mesh.RecalculateBounds ();
 
 		return box;
 	}
@@ -719,7 +716,6 @@ public class Build : MonoBehaviour {
 
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
-		mesh.Optimize();
 
 		return triangle;
 	}
@@ -821,7 +817,6 @@ public class Build : MonoBehaviour {
 
 		mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
-		mesh.Optimize();
 
 		//mesh.uv = new Vector2[] { new Vector2 (0, 0), new Vector2 (0.5f*textureScale.x, textureScale.y), new Vector2 (textureScale.x, 0) };
 		box.AddComponent<MeshRenderer> ().material.mainTexture = texture;
