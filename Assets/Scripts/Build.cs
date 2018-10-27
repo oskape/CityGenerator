@@ -114,6 +114,7 @@ public class Build : MonoBehaviour {
 	private int numColumns = 10;
 
 	private int plotCount;
+    public static int seed;
 
 	public struct feature
 	{
@@ -164,8 +165,9 @@ public class Build : MonoBehaviour {
 	}
 
 	// Use this for initialization
-	void Start () {
-		Random.seed = (int)System.DateTime.Now.Ticks;
+	void Start ()
+    {
+        Random.InitState(seed = (int)System.DateTime.Now.Ticks);
 
 		houses = gameObject.AddComponent<Buildings> ();
 		blocks = gameObject.AddComponent<Buildings> ();

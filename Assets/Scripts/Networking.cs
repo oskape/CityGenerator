@@ -94,6 +94,8 @@ public class Networking : MonoBehaviour
         {
             if (GUILayout.Button("Create Room"))
             {
+                Random.InitState(Build.seed);
+                m_MatchName = Build.seed.ToString();
                 m_NetworkMatch.CreateMatch(m_MatchName, 4, true, "", "", "", 0, 0, OnMatchCreate);
             }
 
@@ -119,6 +121,8 @@ public class Networking : MonoBehaviour
             {
                 if (GUILayout.Button(match.name))
                 {
+                    Random.InitState(Build.seed = int.Parse(match.name));
+                    m_MatchName = match.name;
                     m_NetworkMatch.JoinMatch(match.networkId, "", "", "", 0, 0, OnMatchJoined);
                 }
             }
