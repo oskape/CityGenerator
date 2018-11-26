@@ -60,9 +60,9 @@ public class FlyCameraFPS : MonoBehaviour {
 		if (Input.GetKeyDown (KeyCode.R)) {
 			builder.CleanWorld ();
 			builder.Init ();
-		}
+        }
 
-		if (Input.GetKeyDown (KeyCode.Space)) {
+        if (Input.GetKeyDown (KeyCode.Space)) {
 			moveSpeed *= boost;
 		}
 		if (Input.GetKeyUp (KeyCode.Space)) {
@@ -96,6 +96,7 @@ public class FlyCameraFPS : MonoBehaviour {
 			Vector3 newPos = transform.position + moveSpeed * transform.forward;
 			transform.position = new Vector3();
 			transform.position = newPos;
+            SendPosition();
 			//float newPos = transform.position.z + 0.1f;
 			//transform.position = new Vector3(transform.position.x, transform.position.y, newPos);
 		}
@@ -104,6 +105,7 @@ public class FlyCameraFPS : MonoBehaviour {
 			Vector3 newPos = transform.position - moveSpeed * transform.forward;
 			transform.position = new Vector3();
 			transform.position = newPos;
+            SendPosition();
 			//float newPos = transform.position.z - 0.1f;
 			//transform.position = new Vector3(transform.position.x, transform.position.y, newPos);
 		}
@@ -113,6 +115,7 @@ public class FlyCameraFPS : MonoBehaviour {
 			Vector3 newPos = transform.position - moveSpeed * transform.right;
 			transform.position = new Vector3();
 			transform.position = newPos;
+            SendPosition();
 			//float newPos = transform.position.x - 0.1f;
 			//transform.position = new Vector3(newPos, transform.position.y, transform.position.z);
 		}
@@ -121,6 +124,7 @@ public class FlyCameraFPS : MonoBehaviour {
 			Vector3 newPos = transform.position + moveSpeed * transform.right;
 			transform.position = new Vector3();
 			transform.position = newPos;
+            SendPosition();
 			//float newPos = transform.position.x + 0.1f;
 			//transform.position = new Vector3(newPos, transform.position.y, transform.position.z);
 		}
@@ -130,6 +134,7 @@ public class FlyCameraFPS : MonoBehaviour {
 			Vector3 newPos = transform.position + moveSpeed * transform.up;
 			transform.position = new Vector3();
 			transform.position = newPos;
+            SendPosition();
 			//float newPos = transform.position.y + 0.1f;
 			//transform.position = new Vector3(transform.position.x, newPos, transform.position.z);
 		}
@@ -138,6 +143,7 @@ public class FlyCameraFPS : MonoBehaviour {
 			Vector3 newPos = transform.position - moveSpeed * transform.up;
 			transform.position = new Vector3();
 			transform.position = newPos;
+            SendPosition();
 			//float newPos = transform.position.y - 0.1f;
 			//transform.position = new Vector3(transform.position.x, newPos, transform.position.z);
 		}
@@ -145,10 +151,20 @@ public class FlyCameraFPS : MonoBehaviour {
 		if (Input.GetKey(KeyCode.B))
 		{
 			transform.position = GameObject.FindWithTag("Building").transform.position;
+            SendPosition();
 		}
 		if (Input.GetKey(KeyCode.U))
 		{
 			transform.up = Vector3.up;
 		}
 	}
+
+    void SendPosition()
+    {
+        if (Networking.m_ConnectionIds.Count > 0)
+        {
+            byte lol = new byte();
+            UnityEngine.Networking.NetworkTransport.Send(Networking.m_HostId, Networking.m_ConnectionIds[0], 0, new byte[] { (byte)transform.position.x, (byte)transform.position.y, (byte)transform.position.z }, 3, out lol);
+        }
+    }
 }

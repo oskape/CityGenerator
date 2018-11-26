@@ -13,11 +13,12 @@ public class Networking : MonoBehaviour
     MatchInfo m_MatchInfo;
     string m_MatchName = "NewRoom";
     NetworkMatch m_NetworkMatch;
+    GameObject enemy;
 
     // Connection/communication related
-    int m_HostId = -1;
+    public static int m_HostId = -1;
     // On the server there will be multiple connections, on the client this will only contain one ID
-    List<int> m_ConnectionIds = new List<int>();
+    public static List<int> m_ConnectionIds = new List<int>();
     byte[] m_ReceiveBuffer;
     string m_NetworkMessage = "Hello world";
     string m_LastReceivedMessage = "";
@@ -39,6 +40,7 @@ public class Networking : MonoBehaviour
         m_Writer = new NetworkWriter();
         // While testing with multiple standalone players on one machine this will need to be enabled
         Application.runInBackground = true;
+        enemy = Build.BoxMesh(new Vector3(5, 5, 5), new Texture2D(5, 5), 1, "Road");
     }
 
     void OnApplicationQuit()
@@ -66,6 +68,10 @@ public class Networking : MonoBehaviour
             GUILayout.Label("NetworkID: " + m_MatchInfo.networkId + " NodeID: " + m_MatchInfo.nodeId);
             GUILayout.BeginHorizontal();
             GUILayout.Label("Outgoing message:");
+            if (m_ConnectionIds.Count > 0)
+            {
+                GUILayout.Label(m_ConnectionIds[0].ToString());
+            }
             m_NetworkMessage = GUILayout.TextField(m_NetworkMessage);
             GUILayout.EndHorizontal();
             GUILayout.Label("Last incoming message: " + m_LastReceivedMessage);
@@ -271,6 +277,11 @@ public class Networking : MonoBehaviour
                         Debug.Log("Data event, ConnectionID:" + connectionId +
                             " ChannelID: " + channelId +
                             " Received Size: " + receivedSize);
+                        if (m_ReceiveBuffer.Length > 2)
+                        {
+                            Debug.Log("LOL");
+                            enemy.transform.position = new Vector3(m_ReceiveBuffer[0], m_ReceiveBuffer[1], m_ReceiveBuffer[2]);
+                        }
                         m_Reader = new NetworkReader(m_ReceiveBuffer);
                         m_LastReceivedMessage = m_Reader.ReadString();
                         break;

@@ -603,7 +603,7 @@ public class Build : MonoBehaviour {
 	}
 
 	// https://github.com/mortennobel/ProceduralMesh/blob/master/SimpleProceduralCube.cs
-	protected GameObject BoxMesh(Vector3 scale, Texture texture, float textureScale, string tag)
+	public static GameObject BoxMesh(Vector3 scale, Texture texture, float textureScale, string tag)
 	{
 		GameObject box = new GameObject ();
 		box.tag = tag;
